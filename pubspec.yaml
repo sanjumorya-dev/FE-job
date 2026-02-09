@@ -1,0 +1,44 @@
+name: dihaadi_app
+description: A new Flutter project for Dihaadi app.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  provider: ^6.0.5
+  http: ^1.1.0
+  intl: ^0.18.1
+  shared_preferences: ^2.2.0
+  google_fonts: ^5.1.0
+  image_picker: ^1.0.0
+  loading_animation_widget: ^1.2.0
+
+  # Performance & State Management
+  get: ^4.6.6 # Fast routing and state management
+  cached_network_image: ^3.3.0 # Better image caching
+
+  # UI & Responsiveness
+  flutter_screenutil: ^5.9.0 # Responsive design
+
+  # Data & Storage
+  json_serializable: ^6.7.1 # Better JSON serialization
+  isar: ^3.1.0 # Fast local database
+
+  # Utilities
+  connectivity_plus: ^5.0.0 # Network monitoring
+  freezed_annotation: ^2.4.1 # Immutable models
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  build_runner: ^2.4.6 # For code generation
+  freezed: ^2.4.2 # Generate immutable models
+
+flutter:
+  uses-material-design: true
