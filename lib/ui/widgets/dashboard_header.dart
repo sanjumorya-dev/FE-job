@@ -32,8 +32,8 @@ class DashboardHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isOwner
-              ? [const Color(0xFF4481EB), const Color(0xFF04BEFE)] // Blue Gradient
-              : [const Color(0xFFD482F8), const Color(0xFF966FD6)], // Purple/Pink Gradient
+              ? [AppColors.waveColor1, AppColors.headerBackground]
+              : [AppColors.waveColor2, AppColors.waveColor1],
         ),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
@@ -44,23 +44,22 @@ class DashboardHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Profile Image
               Container(
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: AppColors.glassStroke, width: 2),
                   image: DecorationImage(
                     image: imageUrl != null && imageUrl!.isNotEmpty
                         ? NetworkImage(imageUrl!)
-                        : const AssetImage('assets/images/placeholder_profile.png') as ImageProvider,
+                        : const AssetImage('assets/images/placeholder_profile.png')
+                            as ImageProvider,
                     fit: BoxFit.cover,
                   ),
                 ),
               ),
               const SizedBox(width: 16),
-              // Name & Subtitle
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,32 +69,35 @@ class DashboardHeader extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColors.textMain,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
-                        color: Colors.white.withOpacity(0.9),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              // Notification Icon
               GestureDetector(
                 onTap: onNotificationTap,
                 child: Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                  decoration: const BoxDecoration(
+                    color: AppColors.surfaceSecondary,
                     shape: BoxShape.circle,
                   ),
                   child: Stack(
                     children: [
-                      const Icon(Icons.notifications_outlined, color: Colors.white, size: 24),
+                      const Icon(
+                        Icons.notifications_outlined,
+                        color: AppColors.textMain,
+                        size: 24,
+                      ),
                       Positioned(
                         right: 0,
                         top: 0,
@@ -115,38 +117,47 @@ class DashboardHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          // Bottom Row: Location (Owner) or Availability (Labour)
           if (isOwner && location != null)
-             Align(
+            Align(
               alignment: Alignment.centerLeft,
-               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.15),
+                  color: AppColors.surfaceSecondary,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.location_on, color: Colors.white, size: 16),
+                    const Icon(
+                      Icons.location_on,
+                      color: AppColors.textMain,
+                      size: 16,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       location!,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        color: AppColors.textMain,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
-                           ),
-             ),
+              ),
+            ),
           if (!isOwner)
             Align(
               alignment: Alignment.centerLeft,
               child: GestureDetector(
                 onTap: () => onAvailabilityChanged?.call(!isAvailable),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: AppColors.surfaceSecondary,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -156,7 +167,9 @@ class DashboardHeader extends StatelessWidget {
                         width: 10,
                         height: 10,
                         decoration: BoxDecoration(
-                          color: isAvailable ? const Color(0xFF4CAF50) : Colors.red, // Green or Red dot
+                          color: isAvailable
+                              ? const Color(0xFF4CAF50)
+                              : Colors.red,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -164,7 +177,7 @@ class DashboardHeader extends StatelessWidget {
                       Text(
                         isAvailable ? 'Available for Work' : 'Unavailable',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textMain,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),

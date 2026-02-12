@@ -40,12 +40,14 @@ class DihaadiApp extends StatelessWidget {
             onSurface: AppColors.textMain,
             onError: Colors.white,
           ),
+          cardColor: AppColors.surface,
           useMaterial3: true,
           scaffoldBackgroundColor: AppColors.background,
           appBarTheme: AppBarTheme(
-            backgroundColor: Colors.white,
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
             foregroundColor: AppColors.textMain,
-            elevation: 0.5,
+            elevation: 0,
             centerTitle: false,
             titleTextStyle: GoogleFonts.inter(
               fontSize: 18,
@@ -82,7 +84,7 @@ class DihaadiApp extends StatelessWidget {
               ),
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surfaceSecondary,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: AppColors.border),
@@ -121,6 +123,7 @@ class DihaadiApp extends StatelessWidget {
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
+              shadowColor: Colors.transparent,
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -169,6 +172,21 @@ class DihaadiApp extends StatelessWidget {
               color: AppColors.textMain,
             ),
             side: BorderSide(color: AppColors.border),
+          ),
+          cardTheme: CardThemeData(
+            color: AppColors.surface,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.borderLight),
+            ),
+          ),
+          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+            backgroundColor: AppColors.surface,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.textSecondary,
+            selectedIconTheme: const IconThemeData(size: 24),
+            unselectedIconTheme: const IconThemeData(size: 22),
           ),
           dividerTheme: DividerThemeData(
             color: AppColors.divider,

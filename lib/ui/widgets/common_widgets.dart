@@ -249,7 +249,7 @@ class WorkConnectCard extends StatelessWidget {
       child: Container(
         padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: backgroundColor ?? AppColors.surface,
+          color: backgroundColor ?? AppColors.surfaceSecondary,
           borderRadius: BorderRadius.circular(AppRadii.md),
           border: Border.all(color: AppColors.borderLight),
           boxShadow: withShadow
