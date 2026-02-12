@@ -33,7 +33,7 @@ class WorkConnectButton extends StatelessWidget {
           disabledBackgroundColor: AppColors.disabled,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
         child: isLoading
@@ -43,7 +43,7 @@ class WorkConnectButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    enabled ? AppColors.textMain : AppColors.textSecondary,
+                    enabled ? Colors.white : AppColors.textSecondary,
                   ),
                 ),
               )
@@ -57,7 +57,7 @@ class WorkConnectButton extends StatelessWidget {
                   Text(
                     label,
                     style: AppTypography.button.copyWith(
-                      color: AppColors.textMain,
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -88,7 +88,7 @@ class WorkConnectOutlineButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonColor = color ?? AppColors.primaryDark;
+    final buttonColor = color ?? AppColors.primary;
 
     return SizedBox(
       width: width ?? double.infinity,
@@ -101,7 +101,7 @@ class WorkConnectOutlineButton extends StatelessWidget {
             width: 1.5,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
         child: Row(
@@ -178,7 +178,7 @@ class _WorkConnectTextFieldState extends State<WorkConnectTextField> {
         Text(
           widget.label,
           style: AppTypography.body14Bold.copyWith(
-            color: AppColors.textMain,
+            color: Colors.white,
           ),
         ),
         const SizedBox(height: 8),

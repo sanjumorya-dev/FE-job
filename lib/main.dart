@@ -34,7 +34,7 @@ class DihaadiApp extends StatelessWidget {
             background: AppColors.background,
             surface: AppColors.surface,
             error: AppColors.error,
-            onPrimary: AppColors.textMain,
+            onPrimary: Colors.white,
             onSecondary: Colors.white,
             onBackground: AppColors.textMain,
             onSurface: AppColors.textMain,
@@ -84,25 +84,25 @@ class DihaadiApp extends StatelessWidget {
               ),
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surface,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide(color: AppColors.borderLight),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(28),
-              borderSide: BorderSide(color: AppColors.primaryDark, width: 1.5),
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide(color: AppColors.error),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide(color: AppColors.error, width: 2),
             ),
             contentPadding:
@@ -121,12 +121,12 @@ class DihaadiApp extends StatelessWidget {
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.textMain,
+              foregroundColor: Colors.white,
               elevation: 0,
               shadowColor: Colors.transparent,
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(24),
               ),
               textStyle: GoogleFonts.inter(
                 fontSize: 15,
@@ -136,11 +136,11 @@ class DihaadiApp extends StatelessWidget {
           ),
           outlinedButtonTheme: OutlinedButtonThemeData(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primaryDark,
-              side: BorderSide(color: AppColors.primaryDark, width: 1.5),
+              foregroundColor: AppColors.primary,
+              side: BorderSide(color: AppColors.primary, width: 1.5),
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(24),
               ),
               textStyle: GoogleFonts.inter(
                 fontSize: 15,
@@ -150,7 +150,7 @@ class DihaadiApp extends StatelessWidget {
           ),
           textButtonTheme: TextButtonThemeData(
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.primaryDark,
+              foregroundColor: AppColors.primary,
               textStyle: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -159,7 +159,7 @@ class DihaadiApp extends StatelessWidget {
           ),
           floatingActionButtonTheme: FloatingActionButtonThemeData(
             backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textMain,
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -183,7 +183,7 @@ class DihaadiApp extends StatelessWidget {
           ),
           bottomNavigationBarTheme: BottomNavigationBarThemeData(
             backgroundColor: AppColors.surface,
-            selectedItemColor: AppColors.primaryDark,
+            selectedItemColor: AppColors.primary,
             unselectedItemColor: AppColors.textSecondary,
             selectedIconTheme: const IconThemeData(size: 24),
             unselectedIconTheme: const IconThemeData(size: 22),

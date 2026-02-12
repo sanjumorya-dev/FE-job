@@ -26,36 +26,36 @@ class AppComponentStyles {
   // Button Styles
   static BoxDecoration primaryButtonStyle = BoxDecoration(
     color: AppColors.primary,
-    borderRadius: BorderRadius.circular(28),
+    borderRadius: BorderRadius.circular(24),
   );
 
   static BoxDecoration outlineButtonStyle = BoxDecoration(
     border: Border.all(color: AppColors.primary, width: 1.5),
-    borderRadius: BorderRadius.circular(28),
+    borderRadius: BorderRadius.circular(24),
     color: Colors.transparent,
   );
 
   static BoxDecoration successButtonStyle = BoxDecoration(
     color: AppColors.success,
-    borderRadius: BorderRadius.circular(28),
+    borderRadius: BorderRadius.circular(24),
   );
 
   static BoxDecoration errorButtonStyle = BoxDecoration(
     color: AppColors.error,
-    borderRadius: BorderRadius.circular(28),
+    borderRadius: BorderRadius.circular(24),
   );
 
   // Input Field Style
   static BoxDecoration inputFieldStyle = BoxDecoration(
     color: AppColors.surfaceSecondary,
     border: Border.all(color: AppColors.borderLight),
-    borderRadius: BorderRadius.circular(28),
+    borderRadius: BorderRadius.circular(24),
   );
 
   static BoxDecoration inputFieldFocusedStyle = BoxDecoration(
     color: AppColors.surfaceSecondary,
-    border: Border.all(color: AppColors.primary, width: 2),
-    borderRadius: BorderRadius.circular(28),
+    border: Border.all(color: AppColors.primary, width: 1.5),
+    borderRadius: BorderRadius.circular(24),
   );
 
   // Badge Styles
