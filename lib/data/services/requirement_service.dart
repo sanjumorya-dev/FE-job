@@ -69,11 +69,49 @@ class RequirementService {
         'Get Requirements Response: ${response.statusCode}, ${response.body}');
     if (response.statusCode == 200) {
       print('Get Requirements Response: ${response}');
-      final List<dynamic> data = jsonDecode(response.body);
-      print('Get Requirements Response: ${response.body}');
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      final List<dynamic> data = jsonResponse['data']; // Extract data field
       return data.map((e) => Requirement.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch requirements: ${response.body}');
+    }
+  }
+  Future<void> applyForRequirement(String requirementId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/Requirement/apply/$requirementId'),
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to apply for requirement: ${response.body}');
+    }
+  }
+
+  Future<List<Requirement>> getMyApplications() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/Requirement/my-applications'),
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => Requirement.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to fetch applications: ${response.body}');
+    }
+  }
+
+  Future<Requirement> getRequirementById(String id) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/Requirement/$id'),
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      final dynamic data = jsonDecode(response.body);
+      return Requirement.fromJson(data);
+    } else {
+      throw Exception('Failed to fetch requirement details: ${response.body}');
     }
   }
 }

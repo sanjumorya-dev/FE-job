@@ -11,6 +11,8 @@ import 'steps/step3_role_info.dart';
 import '../otp_verify_screen.dart';
 import 'package:dihaadi_app/ui/screens/owner/owner_dashboard.dart';
 import 'package:dihaadi_app/ui/screens/labour/labour_dashboard.dart';
+import 'package:dihaadi_app/ui/widgets/auth_header.dart';
+import 'package:dihaadi_app/constants/colors.dart';
 
 class RegisterScreen extends StatefulWidget {
   final UserRole role;
@@ -146,95 +148,161 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return ChangeNotifierProvider(
       create: (_) => WorkTypeViewModel(),
       child: Scaffold(
-        appBar: AppBar(
-          title: Text("Register as ${selectedRole.name.toUpperCase()}"),
-          leading: _currentStep > 0
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back), onPressed: _prevStep)
-              : null,
-        ),
-        body: Column(
+        backgroundColor: AppColors.backgroundBeige,
+        resizeToAvoidBottomInset: true,
+        body: Stack(
           children: [
-            // Custom Progress Indicator
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Row(
-                children: List.generate(
-                    3,
-                    (index) => Expanded(
-                          child: Container(
-                            height: 4,
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            color: index <= _currentStep
-                                ? Theme.of(context).primaryColor
-                                : Colors.grey.shade300,
-                          ),
-                        )),
+            const Align(
+              alignment: Alignment.topCenter,
+              child: AuthHeader(
+                title: "Sign Up!",
+                subtitle: "Create Account",
+                height: 340,
               ),
             ),
-            Expanded(
+            // Dot Patterns
+            Positioned.fill(
+              child: _buildDotPatterns(),
+            ),
+            Positioned.fill(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: IndexedStack(
-                  index: _currentStep,
+                child: Column(
                   children: [
-                    Step1BasicInfo(
-                      formKey: _formKeys[0],
-                      nameController: nameController,
-                      emailController: emailController,
-                      mobileController: mobileController,
-                      aadharController: aadharController,
-                      onImageSelected: (image) => selectedImage = image,
+                    const SizedBox(height: 240),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 20),
+                          // Custom Progress Indicator
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 40, vertical: 10),
+                            child: Row(
+                              children: List.generate(
+                                  3,
+                                  (index) => Expanded(
+                                        child: Container(
+                                          height: 4,
+                                          margin: const EdgeInsets.symmetric(
+                                              horizontal: 4),
+                                          decoration: BoxDecoration(
+                                            color: index <= _currentStep
+                                                ? AppColors.primary
+                                                : Colors.grey.shade200,
+                                            borderRadius:
+                                                BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                      )),
+                            ),
+                          ),
+                          // Form Steps
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 16),
+                            child: IndexedStack(
+                              index: _currentStep,
+                              children: [
+                                Step1BasicInfo(
+                                  formKey: _formKeys[0],
+                                  nameController: nameController,
+                                  emailController: emailController,
+                                  mobileController: mobileController,
+                                  aadharController: aadharController,
+                                  onImageSelected: (image) =>
+                                      selectedImage = image,
+                                ),
+                                Step2AddressInfo(
+                                  formKey: _formKeys[1],
+                                  addressController: addressController,
+                                  cityController: cityController,
+                                  stateController: stateController,
+                                  pincodeController: pincodeController,
+                                  countryController: countryController,
+                                ),
+                                Step3RoleInfo(
+                                  formKey: _formKeys[2],
+                                  passwordController: passwordController,
+                                  confirmPasswordController:
+                                      confirmPasswordController,
+                                  isWorker: selectedRole == UserRole.worker,
+                                  onWorkTypesChanged: (types) =>
+                                      selectedWorkTypes = types,
+                                  onRoleChanged: (role) =>
+                                      setState(() => selectedRole = role),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Navigation Buttons
+                          Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Row(
+                              children: [
+                                if (_currentStep > 0)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 16.0),
+                                    child: IconButton(
+                                      onPressed: _prevStep,
+                                      icon: const Icon(Icons.arrow_back_ios,
+                                          color: Colors.grey),
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : _nextStep,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 16),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                    ),
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : Text(
+                                            _currentStep == 2
+                                                ? "Sign Up"
+                                                : "Next",
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      ),
                     ),
-                    Step2AddressInfo(
-                      formKey: _formKeys[1],
-                      addressController: addressController,
-                      cityController: cityController,
-                      stateController: stateController,
-                      pincodeController: pincodeController,
-                      countryController: countryController,
-                    ),
-                    Step3RoleInfo(
-                      formKey: _formKeys[2],
-                      passwordController: passwordController,
-                      confirmPasswordController: confirmPasswordController,
-                      isWorker: selectedRole == UserRole.worker,
-                      onWorkTypesChanged: (types) => selectedWorkTypes = types,
-                      onRoleChanged: (role) =>
-                          setState(() => selectedRole = role),
-                    ),
+                    const SizedBox(height: 40),
                   ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _nextStep,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          _currentStep == 2 ? "Finish" : "Next",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                 ),
               ),
             ),
@@ -243,4 +311,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+
+  Widget _buildDotPatterns() {
+    return Stack(
+      children: [
+        // Top-right dots
+        Positioned(
+          top: 50,
+          right: 20,
+          child: _buildDotGrid(),
+        ),
+        // Bottom-left dots
+        Positioned(
+          bottom: 40,
+          left: 20,
+          child: _buildDotGrid(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDotGrid() {
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: CustomPaint(
+        painter: _DotGridPainter(),
+      ),
+    );
+  }
+}
+
+class _DotGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.primary.withValues(alpha: 0.3)
+      ..style = PaintingStyle.fill;
+
+    const dotRadius = 2.0;
+    const spacing = 8.0;
+
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), dotRadius, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

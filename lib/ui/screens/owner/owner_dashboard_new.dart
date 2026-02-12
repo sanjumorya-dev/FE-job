@@ -40,19 +40,22 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
     return Scaffold(
       backgroundColor: AppColors.background,
       // Hide AppBar for Dashboard tab as it has a custom header
-      appBar: _currentIndex == 0 ? null : AppBar(
-        title: Text(_currentIndex == 1 ? 'My Requirements' : 'Profile'),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.textMain,
-      ),
+      appBar: _currentIndex == 0
+          ? null
+          : AppBar(
+              title: Text(_currentIndex == 1 ? 'My Requirements' : 'Profile'),
+              elevation: 0,
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.textMain,
+            ),
       body: screens[_currentIndex],
       floatingActionButton: _currentIndex == 1
           ? FloatingActionButton.extended(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const CreateRequirementScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const CreateRequirementScreen()),
                 );
               },
               backgroundColor: AppColors.primary,
@@ -90,13 +93,14 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
     );
   }
 
-  Widget _buildNavItem(IconData outlinedIcon, IconData filledIcon, String label, int index) {
+  Widget _buildNavItem(
+      IconData outlinedIcon, IconData filledIcon, String label, int index) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
         setState(() => _currentIndex = index);
         if (index == 1) {
-           context.read<OwnerViewModel>().fetchMyRequirements();
+          context.read<OwnerViewModel>().fetchMyRequirements();
         }
       },
       child: Column(
@@ -172,7 +176,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
                   // Handle notification tap
                 },
               ),
-              
+
               // 2. Stats Grid
               Transform.translate(
                 offset: const Offset(0, -40), // Overlap with header
@@ -216,11 +220,11 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
                           String statusText = 'Open';
                           Color statusColor = Colors.green;
                           if (req.status == 1) {
-                             statusText = 'On Hold';
-                             statusColor = Colors.orange;
+                            statusText = 'On Hold';
+                            statusColor = Colors.orange;
                           } else if (req.status == 2) {
-                             statusText = 'Closed';
-                             statusColor = Colors.red;
+                            statusText = 'Closed';
+                            statusColor = Colors.red;
                           }
 
                           return RecentJobTile(
@@ -234,7 +238,8 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => EditRequirementScreen(requirement: req),
+                                  builder: (context) =>
+                                      EditRequirementScreen(requirement: req),
                                 ),
                               );
                             },
@@ -258,7 +263,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
     return Consumer<OwnerViewModel>(
       builder: (context, viewModel, child) {
         if (viewModel.isLoading) return const LoadingScreen();
-        
+
         return DefaultTabController(
           length: 2,
           child: Column(
@@ -297,7 +302,8 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
     );
   }
 
-  Widget _buildRequirementList(OwnerViewModel viewModel, {required bool isActive}) {
+  Widget _buildRequirementList(OwnerViewModel viewModel,
+      {required bool isActive}) {
     // Filter logic: Active = status 0 or 1? Closed = 2?
     // Start with all for now or simplified filter
     final filtered = viewModel.myRequirements.where((req) {
@@ -306,7 +312,9 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
     }).toList();
 
     if (filtered.isEmpty) {
-      return Center(child: Text(isActive ? 'No active requirements' : 'No closed requirements'));
+      return Center(
+          child: Text(
+              isActive ? 'No active requirements' : 'No closed requirements'));
     }
 
     return ListView.builder(
@@ -318,10 +326,12 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
           title: req.title,
           subtitle: req.address ?? 'No Location',
           statusText: isActive ? (req.status == 1 ? 'Hold' : 'Open') : 'Closed',
-          statusColor: isActive ? (req.status == 1 ? Colors.orange : Colors.green) : Colors.red,
+          statusColor: isActive
+              ? (req.status == 1 ? Colors.orange : Colors.green)
+              : Colors.red,
           footerText: 'Posted on ${_formatDate(req.date)}',
           onTap: () {
-             Navigator.push(
+            Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => EditRequirementScreen(requirement: req),

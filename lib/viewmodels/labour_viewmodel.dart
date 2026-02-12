@@ -32,31 +32,33 @@ class LabourViewModel extends ChangeNotifier {
   }
 
   Future<void> fetchDashboardStats() async {
+    // TODO: Implement real stats API when available.
+    // For now, we can mock or derive from other data if possible.
+    // Leaving as mock for now as requested in plan task "Add getLabourStats (mock or real)"
     await Future.delayed(const Duration(milliseconds: 300));
     _stats = {
-      'jobsApplied': '8',
-      'approved': '2',
-      'ongoing': '1',
-      'earnings': '1,250',
+      'jobsApplied': _recentApplications.length.toString(), // Derived from actual applications
+      'approved': '0', // Placeholder
+      'ongoing': '0', // Placeholder
+      'earnings': '0', // Placeholder
     };
     notifyListeners();
   }
 
   Future<void> fetchRecentApplications() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _recentApplications = [
-      Requirement(
-        id: '101', title: 'Roof Repair Helpers', description: 'Need help with roofing',
-        salary: 120, address: 'Skyline Roofing Co.', status: 1, workTypeId: '1',
-        date: DateTime.now(), userId: 'owner1',
-      ),
-      Requirement(
-        id: '102', title: 'Interior Woodwork', description: 'Detailing',
-        salary: 18, address: 'Harbor View', status: 2, workTypeId: '2',
-        date: DateTime.now().subtract(const Duration(days: 2)), userId: 'owner2',
-      ),
-    ];
+    _isLoading = true;
     notifyListeners();
+    try {
+      _recentApplications = await _apiService.getMyApplications();
+      // Update stats based on fetched applications
+      _stats['jobsApplied'] = _recentApplications.length.toString();
+    } catch (e) {
+      debugPrint("Error fetching applications: $e");
+      // Keep empty list on error
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> fetchJobs() async {
@@ -65,8 +67,7 @@ class LabourViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _availableJobs =
-          await _apiService.getRequirements(); // Fetch all/filtered jobs
+      _availableJobs = await _apiService.getRequirements(status: 1); // Fetch Active jobs
       _isLoading = false;
     } catch (e) {
       _error = e.toString();
@@ -80,9 +81,9 @@ class LabourViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Mock apply logic or implement in API service if endpoint existed
-      await Future.delayed(const Duration(seconds: 1));
-      // await _apiService.apply(requirementId);
+      await _apiService.applyForRequirement(requirementId);
+      // Refresh applications list
+      await fetchRecentApplications();
       _isLoading = false;
       notifyListeners();
       return true;

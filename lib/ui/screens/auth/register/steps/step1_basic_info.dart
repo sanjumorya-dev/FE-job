@@ -137,14 +137,14 @@ class _Step1BasicInfoState extends State<Step1BasicInfo> {
               prefixIcon:
                   const Icon(Icons.person, color: AppColors.textSecondary),
               filled: true,
-              fillColor: AppColors.surface,
+              fillColor: Colors.grey.shade50,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.surface),
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.surface),
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -170,8 +170,8 @@ class _Step1BasicInfoState extends State<Step1BasicInfo> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.borderLight),
-                  color: AppColors.surface,
+                  border: Border.all(color: Colors.grey.shade300),
+                  color: Colors.grey.shade50,
                 ),
                 child: DropdownButton<String>(
                   value: _selectedCode,
@@ -201,14 +201,14 @@ class _Step1BasicInfoState extends State<Step1BasicInfo> {
                     prefixIcon:
                         const Icon(Icons.phone, color: AppColors.textSecondary),
                     filled: true,
-                    fillColor: AppColors.surface,
+                    fillColor: Colors.grey.shade50,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.surface),
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.surface),
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -219,7 +219,7 @@ class _Step1BasicInfoState extends State<Step1BasicInfo> {
                   style: const TextStyle(color: AppColors.textMain),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  maxLength: 10,
+                  // maxLength: 10,
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Required';
                     if (v.length != 10) return 'Enter valid 10-digit mobile';
@@ -239,14 +239,14 @@ class _Step1BasicInfoState extends State<Step1BasicInfo> {
               prefixIcon:
                   const Icon(Icons.email, color: AppColors.textSecondary),
               filled: true,
-              fillColor: AppColors.surface,
+              fillColor: Colors.grey.shade50,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.surface),
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.surface),
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -279,14 +279,14 @@ class _Step1BasicInfoState extends State<Step1BasicInfo> {
               prefixIcon:
                   const Icon(Icons.badge, color: AppColors.textSecondary),
               filled: true,
-              fillColor: AppColors.surface,
+              fillColor: Colors.grey.shade50,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.surface),
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.surface),
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

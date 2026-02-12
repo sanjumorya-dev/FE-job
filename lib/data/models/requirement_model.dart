@@ -121,7 +121,7 @@ class Requirement {
           : json['PersonNeed'] != null
               ? (json['PersonNeed'] as num).toInt()
               : null,
-      address: json['address'] ?? json['Address'],
+      address: json['fulladdress'] ?? json['fullAddress'],
     );
   }
 }

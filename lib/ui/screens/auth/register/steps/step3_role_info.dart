@@ -57,8 +57,7 @@ class _Step3RoleInfoState extends State<Step3RoleInfo> {
   Widget build(BuildContext context) {
     return Form(
       key: widget.formKey,
-      child: SingleChildScrollView(
-        child: Column(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
@@ -78,12 +77,12 @@ class _Step3RoleInfoState extends State<Step3RoleInfo> {
                 prefixIcon:
                     const Icon(Icons.lock, color: AppColors.textSecondary),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.borderLight),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.borderLight),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -91,7 +90,7 @@ class _Step3RoleInfoState extends State<Step3RoleInfo> {
                       const BorderSide(color: AppColors.primary, width: 2),
                 ),
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: Colors.grey.shade50,
               ),
               obscureText: true,
               style: const TextStyle(color: AppColors.textMain),
@@ -106,12 +105,12 @@ class _Step3RoleInfoState extends State<Step3RoleInfo> {
                 prefixIcon: const Icon(Icons.lock_outline,
                     color: AppColors.textSecondary),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.borderLight),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.borderLight),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -119,7 +118,7 @@ class _Step3RoleInfoState extends State<Step3RoleInfo> {
                       const BorderSide(color: AppColors.primary, width: 2),
                 ),
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: Colors.grey.shade50,
               ),
               obscureText: true,
               style: const TextStyle(color: AppColors.textMain),
@@ -201,7 +200,7 @@ class _Step3RoleInfoState extends State<Step3RoleInfo> {
                 },
               ),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 "Select at least one skill",
                 style: TextStyle(
                   fontSize: 12,
@@ -211,7 +210,6 @@ class _Step3RoleInfoState extends State<Step3RoleInfo> {
             ],
           ],
         ),
-      ),
     );
   }
 }
@@ -244,7 +242,7 @@ class _RoleCard extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(12),
           color: isSelected
-              ? AppColors.primary.withOpacity(0.1)
+              ? AppColors.primary.withValues(alpha: 0.1)
               : AppColors.surface,
         ),
         child: Column(

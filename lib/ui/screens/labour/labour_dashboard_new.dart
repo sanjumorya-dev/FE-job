@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:dihaadi_app/viewmodels/labour_viewmodel.dart';
+import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
 import 'package:dihaadi_app/ui/screens/profile_screen.dart';
 import 'package:dihaadi_app/ui/screens/labour/job_details_screen.dart';
 import 'package:dihaadi_app/ui/screens/loading_screen.dart';
@@ -156,15 +158,21 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. Header
-              DashboardHeader(
-                userName: 'Rajesh Kumar', // TODO: Get from Auth Provider
-                subtitle: 'Master Carpenter',
-                isOwner: false,
-                imageUrl: 'https://i.pravatar.cc/150?u=rajesh', // Mock image
-                isAvailable: viewModel.isAvailable,
-                onAvailabilityChanged: (value) => viewModel.toggleAvailability(value),
-                onNotificationTap: () {
-                   // Handle notification tap
+              Consumer<AuthViewModel>(
+                builder: (context, authVM, _) {
+                  final user = authVM.currentUser;
+                  return DashboardHeader(
+                    userName: user?.name ?? 'Labour',
+                    subtitle: 'Skilled worker', // Could be dynamic based on work type if available
+                    isOwner: false,
+                    imageUrl: 'https://ui-avatars.com/api/?name=${user?.name ?? "User"}&background=random',
+                    isAvailable: viewModel.isAvailable,
+                    onAvailabilityChanged: (value) =>
+                        viewModel.toggleAvailability(value),
+                    onNotificationTap: () {
+                      // Handle notification tap
+                    },
+                  );
                 },
               ),
 
@@ -190,7 +198,42 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
                     ),
                     TextButton(
                       onPressed: () {
-                        // Navigate to full applications list (not implemented yet)
+                         Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Scaffold(
+                              appBar: AppBar(title: const Text('My Applications')),
+                              body: Consumer<LabourViewModel>(
+                                builder: (context, vm, _) {
+                                  if (vm.recentApplications.isEmpty) {
+                                    return const Center(child: Text('No applications found'));
+                                  }
+                                  return ListView.builder(
+                                    itemCount: vm.recentApplications.length,
+                                    itemBuilder: (context, index) {
+                                      final job = vm.recentApplications[index];
+                                      return RecentJobTile(
+                                        title: job.title,
+                                        subtitle: job.address ?? 'Location TBD',
+                                        statusText: _getStatusText(job.status ?? 0),
+                                        statusColor: _getStatusColor(job.status ?? 0),
+                                        footerText: 'Applied on ${_formatDate(job.date)}', 
+                                        onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => JobDetailsScreen(job: job),
+                                              ),
+                                            );
+                                        },
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
                       },
                       child: const Text('View all'),
                     ),
@@ -216,9 +259,9 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
                     return RecentJobTile(
                       title: job.title,
                       subtitle: job.address ?? 'Location TBD',
-                      // Mocking status for applications
-                      statusText: _getMockApplicationStatus(index), 
-                      statusColor: _getMockApplicationColor(index),
+                      // Use real status from job
+                      statusText: _getStatusText(job.status ?? 0), 
+                      statusColor: _getStatusColor(job.status ?? 0),
                       footerText: 'Applied on ${_formatDate(job.date)}',
                       onTap: () {
                         // Show details
@@ -299,18 +342,36 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
   
   String _formatDate(DateTime? date) {
     if (date == null) return 'N/A';
-    return '${date.day}/${date.month}/${date.year}';
+    return DateFormat('dd MMM yyyy').format(date.toLocal());
   }
 
-  String _getMockApplicationStatus(int index) {
-    if (index == 0) return 'Pending';
-    if (index == 1) return 'Reviewed';
-    return 'Rejected';
+  String _getStatusText(int status) {
+    switch (status) {
+      case 0:
+        return 'Pending';
+      case 1:
+        return 'Active';
+      case 2:
+        return 'Completed';
+      case 3:
+        return 'Cancelled';
+      default:
+        return 'Unknown';
+    }
   }
 
-  Color _getMockApplicationColor(int index) {
-     if (index == 0) return Colors.orange;
-    if (index == 1) return Colors.blue;
-    return Colors.red;
+  Color _getStatusColor(int status) {
+    switch (status) {
+      case 0:
+        return Colors.orange;
+      case 1:
+        return Colors.green;
+      case 2:
+        return Colors.blue;
+      case 3:
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }
