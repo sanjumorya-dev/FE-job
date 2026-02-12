@@ -33,7 +33,7 @@ class WorkConnectButton extends StatelessWidget {
           disabledBackgroundColor: AppColors.disabled,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.sm),
+            borderRadius: BorderRadius.circular(28),
           ),
         ),
         child: isLoading
@@ -43,7 +43,7 @@ class WorkConnectButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    enabled ? Colors.white : AppColors.textSecondary,
+                    enabled ? AppColors.textMain : AppColors.textSecondary,
                   ),
                 ),
               )
@@ -57,7 +57,7 @@ class WorkConnectButton extends StatelessWidget {
                   Text(
                     label,
                     style: AppTypography.button.copyWith(
-                      color: Colors.white,
+                      color: AppColors.textMain,
                     ),
                   ),
                 ],
@@ -88,7 +88,7 @@ class WorkConnectOutlineButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonColor = color ?? AppColors.primary;
+    final buttonColor = color ?? AppColors.primaryDark;
 
     return SizedBox(
       width: width ?? double.infinity,
@@ -101,7 +101,7 @@ class WorkConnectOutlineButton extends StatelessWidget {
             width: 1.5,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.sm),
+            borderRadius: BorderRadius.circular(28),
           ),
         ),
         child: Row(
