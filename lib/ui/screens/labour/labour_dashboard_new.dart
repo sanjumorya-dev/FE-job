@@ -73,16 +73,16 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
     return SafeArea(
       top: false,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        margin: const EdgeInsets.fromLTRB(22, 0, 22, 16),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF101B31),
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
+              color: Colors.black.withValues(alpha: 0.18),
               blurRadius: 20,
-              offset: const Offset(0, 6),
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -91,7 +91,7 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
             _buildNavTab(Icons.home_outlined, Icons.home_rounded, 'Home', 0),
             _buildNavTab(Icons.list_alt_outlined, Icons.list_alt_rounded,
                 'Requirement', 1),
-            const SizedBox(width: 64),
+            const SizedBox(width: 68),
             _buildNavTab(Icons.notifications_none_rounded,
                 Icons.notifications_rounded, 'Notifications', 2),
             _buildNavTab(Icons.person_outline_rounded, Icons.person_rounded,
@@ -105,27 +105,30 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
   Widget _buildNavTab(
       IconData outlinedIcon, IconData filledIcon, String label, int index) {
     final isSelected = _currentIndex == index;
+    final Color inactive = Colors.white.withValues(alpha: 0.55);
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => setState(() => _currentIndex = index),
         child: SizedBox(
-          height: 48,
+          height: 46,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 isSelected ? filledIcon : outlinedIcon,
-                color: isSelected ? AppColors.textMain : AppColors.inactive,
+                color: isSelected ? Colors.white : inactive,
                 size: 20,
               ),
               const SizedBox(height: 2),
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 9.5,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  color: isSelected ? AppColors.textMain : AppColors.inactive,
+                  color: isSelected ? Colors.white : inactive,
                 ),
               ),
             ],
@@ -137,13 +140,13 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
 
   Widget _buildCenterFab() {
     return Container(
-      width: 64,
-      height: 64,
+      width: 66,
+      height: 66,
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF2C313A),
-        border: Border.all(color: Colors.white, width: 5),
+        color: const Color(0xFFDDFEF8),
+        border: Border.all(color: const Color(0xFF101B31), width: 4),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.20),
@@ -154,7 +157,7 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
       ),
       child: IconButton(
         onPressed: () => setState(() => _currentIndex = 1),
-        icon: const Icon(Icons.add, color: Colors.white, size: 24),
+        icon: const Icon(Icons.add, color: Color(0xFF101B31), size: 26),
       ),
     );
   }

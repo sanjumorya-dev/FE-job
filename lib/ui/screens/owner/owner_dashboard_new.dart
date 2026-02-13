@@ -66,25 +66,25 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
     return SafeArea(
       top: false,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        margin: const EdgeInsets.fromLTRB(22, 0, 22, 16),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF101B31),
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
+              color: Colors.black.withValues(alpha: 0.18),
               blurRadius: 20,
-              offset: const Offset(0, 6),
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: Row(
           children: [
             _buildNavTab(Icons.home_outlined, Icons.home_rounded, 'Home', 0),
-            _buildNavTab(Icons.list_alt_outlined, Icons.list_alt_rounded,
+            _buildNavTab(Icons.assignment_outlined, Icons.assignment_rounded,
                 'Requirement', 1),
-            const SizedBox(width: 64),
+            const SizedBox(width: 68),
             _buildNavTab(Icons.notifications_none_rounded,
                 Icons.notifications_rounded, 'Notifications', 2),
             _buildNavTab(Icons.person_outline_rounded, Icons.person_rounded,
@@ -98,9 +98,10 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
   Widget _buildNavTab(
       IconData outlinedIcon, IconData filledIcon, String label, int index) {
     final isSelected = _currentIndex == index;
+    final Color inactive = Colors.white.withValues(alpha: 0.55);
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: () {
           setState(() => _currentIndex = index);
           if (index == 1) {
@@ -108,22 +109,24 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
           }
         },
         child: SizedBox(
-          height: 48,
+          height: 46,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 isSelected ? filledIcon : outlinedIcon,
-                color: isSelected ? AppColors.textMain : AppColors.inactive,
+                color: isSelected ? Colors.white : inactive,
                 size: 20,
               ),
               const SizedBox(height: 2),
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 9.5,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  color: isSelected ? AppColors.textMain : AppColors.inactive,
+                  color: isSelected ? Colors.white : inactive,
                 ),
               ),
             ],
@@ -135,13 +138,13 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
 
   Widget _buildCenterFab() {
     return Container(
-      width: 64,
-      height: 64,
+      width: 66,
+      height: 66,
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF2C313A),
-        border: Border.all(color: Colors.white, width: 5),
+        color: const Color(0xFFDDFEF8),
+        border: Border.all(color: const Color(0xFF101B31), width: 4),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.20),
@@ -163,7 +166,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
             context.read<OwnerViewModel>().fetchMyRequirements();
           });
         },
-        icon: const Icon(Icons.add, color: Colors.white, size: 24),
+        icon: const Icon(Icons.add, color: Color(0xFF101B31), size: 26),
       ),
     );
   }
@@ -310,8 +313,6 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
   }
 
   Widget _buildRequirements() {
-    // This can reuse the list logic or be a separate screen
-    // For now, implementing a clean list view
     return Consumer<OwnerViewModel>(
       builder: (context, viewModel, child) {
         if (viewModel.isLoading) return const LoadingScreen();
@@ -320,25 +321,41 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
           length: 2,
           child: Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Requirement',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              ),
               Container(
-                margin: const EdgeInsets.all(16),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFFD4DAE4),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: TabBar(
                   indicator: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFF2F3A50),
+                    borderRadius: BorderRadius.circular(8),
                   ),
+                  indicatorPadding: const EdgeInsets.all(4),
                   labelColor: Colors.white,
-                  unselectedLabelColor: AppColors.textSecondary,
+                  unselectedLabelColor: const Color(0xFF6D7487),
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w700),
                   tabs: const [
                     Tab(text: 'Active'),
                     Tab(text: 'Closed'),
                   ],
                 ),
               ),
+              const SizedBox(height: 8),
               Expanded(
                 child: TabBarView(
                   children: [
@@ -356,8 +373,6 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
 
   Widget _buildRequirementList(OwnerViewModel viewModel,
       {required bool isActive}) {
-    // Filter logic: Active = status 0 or 1? Closed = 2?
-    // Start with all for now or simplified filter
     final filtered = viewModel.myRequirements.where((req) {
       if (isActive) return req.status != 2;
       return req.status == 2;
@@ -365,31 +380,203 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
 
     if (filtered.isEmpty) {
       return Center(
-          child: Text(
-              isActive ? 'No active requirements' : 'No closed requirements'));
+        child: Text(isActive ? 'No active requirements' : 'No closed requirements'),
+      );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 130),
       itemCount: filtered.length,
       itemBuilder: (context, index) {
         final req = filtered[index];
-        return RecentJobTile(
-          title: req.title,
-          subtitle: req.address ?? 'No Location',
-          statusText: isActive ? (req.status == 1 ? 'Hold' : 'Open') : 'Closed',
-          statusColor: isActive
-              ? (req.status == 1 ? Colors.orange : Colors.green)
-              : Colors.red,
-          footerText: 'Posted on ${_formatDate(req.date)}',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EditRequirementScreen(requirement: req),
+        final bool open = req.status == 0;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
-            );
-          },
+            ],
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F2F7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.business_center_outlined,
+                        color: Color(0xFF657189), size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          req.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textMain,
+                            height: 1.15,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          req.address ?? 'No location',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Posted on ${_formatDate(req.date)}',
+                          style: const TextStyle(
+                            color: Color(0xFF9AA1B4),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: open
+                          ? const Color(0xFFDFF5ED)
+                          : const Color(0xFFE8EAF0),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      open ? 'OPEN' : 'CLOSED',
+                      style: TextStyle(
+                        color: open
+                            ? const Color(0xFF208F67)
+                            : const Color(0xFF56607A),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F5FA),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Salary / Wage',
+                              style: TextStyle(
+                                  color: Color(0xFF8A92A5), fontSize: 11)),
+                          const SizedBox(height: 2),
+                          Text(
+                            '₹ ${(req.salary ?? 0).toStringAsFixed(0)}/day',
+                            style: const TextStyle(
+                                color: AppColors.textMain,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('People Needed',
+                              style: TextStyle(
+                                  color: Color(0xFF8A92A5), fontSize: 11)),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${req.personNeed ?? 0} Workers',
+                            style: const TextStyle(
+                                color: AppColors.textMain,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EditRequirementScreen(requirement: req),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF515B73),
+                        side: const BorderSide(color: Color(0xFFD2D8E4)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('View Details'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EditRequirementScreen(requirement: req),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2F3A50),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('Edit'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
