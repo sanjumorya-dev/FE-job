@@ -87,7 +87,7 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
             _buildNavItem(Icons.home_outlined, Icons.home_rounded, 0),
             _buildNavItem(Icons.work_outline_rounded, Icons.work_rounded, 1),
             const SizedBox(width: 56),
-            _buildNavItem(Icons.calendar_today_outlined, Icons.calendar_month_rounded, 0),
+            _buildGhostItem(Icons.notifications_none_rounded),
             _buildNavItem(Icons.person_outline_rounded, Icons.person_rounded, 2),
           ],
         ),
@@ -109,6 +109,15 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
             size: 20,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildGhostItem(IconData icon) {
+    return Expanded(
+      child: SizedBox(
+        height: 34,
+        child: Icon(icon, color: AppColors.inactive, size: 20),
       ),
     );
   }

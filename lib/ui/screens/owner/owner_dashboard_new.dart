@@ -77,7 +77,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
             _buildNavItem(Icons.home_outlined, Icons.home_rounded, 0),
             _buildNavItem(Icons.list_alt_outlined, Icons.list_alt_rounded, 1),
             const SizedBox(width: 56),
-            _buildNavItem(Icons.event_note_outlined, Icons.event_note_rounded, 1),
+            _buildGhostItem(Icons.notifications_none_rounded),
             _buildNavItem(Icons.person_outline_rounded, Icons.person_rounded, 2),
           ],
         ),
@@ -104,6 +104,15 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
             size: 20,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildGhostItem(IconData icon) {
+    return Expanded(
+      child: SizedBox(
+        height: 34,
+        child: Icon(icon, color: AppColors.inactive, size: 20),
       ),
     );
   }
