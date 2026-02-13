@@ -14,15 +14,49 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Requirement Details'),
         centerTitle: true,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.more_vert_rounded),
-          )
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            onSelected: (value) {
+              if (value == 'delete') {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Delete action coming soon')),
+                );
+              } else if (value == 'hold') {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Hold action coming soon')),
+                );
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem<String>(
+                value: 'delete',
+                child: Text(
+                  'Delete',
+                  style: TextStyle(
+                    color: Color(0xFFDD3E3E),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'hold',
+                child: Text(
+                  'Hold',
+                  style: TextStyle(
+                    color: Color(0xFF171717),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 6),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -31,14 +65,13 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFFDFF5ED),
                       borderRadius: BorderRadius.circular(6),
@@ -56,15 +89,15 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
                   Text(
                     requirement.title,
                     style: const TextStyle(
-                      fontSize: 26,
-                      height: 1.15,
+                      fontSize: 30,
+                      height: 1.1,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textMain,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
                   Text(
-                    requirement.address ?? 'No location provided',
+                    requirement.address ?? 'Site Office, Sector 45, Gurugram',
                     style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
@@ -76,8 +109,7 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                _metricTile('Wage / Salary',
-                    '₹ ${(requirement.salary ?? 0).toStringAsFixed(0)} / day'),
+                _metricTile('Wage / Salary', '₹ ${(requirement.salary ?? 0).toStringAsFixed(0)} / day'),
                 const SizedBox(width: 10),
                 _metricTile('Workers Needed', '${requirement.personNeed ?? 0} People'),
               ],
@@ -94,7 +126,7 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
             _sectionCard(
               'Description',
               requirement.description.isEmpty
-                  ? 'No description provided.'
+                  ? 'Looking for experienced CCTV technicians for a residential project. This work involves drilling, running cables through conduit, and configuring the DVR system.'
                   : requirement.description,
             ),
             const SizedBox(height: 12),
@@ -108,9 +140,10 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Required Skills',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  const Text(
+                    'Required Skills',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
@@ -136,9 +169,10 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Location',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  const Text(
+                    'Location',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
                   const SizedBox(height: 8),
                   Container(
                     height: 120,
@@ -147,8 +181,11 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(Icons.map_rounded,
-                        size: 48, color: Color(0xFF6CA6C9)),
+                    child: const Icon(
+                      Icons.map_rounded,
+                      size: 48,
+                      color: Color(0xFF6CA6C9),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
@@ -168,25 +205,49 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-          child: SizedBox(
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => OwnerApplicationsScreen(requirement: requirement),
+          child: Row(
+            children: [
+              SizedBox(
+                height: 48,
+                width: 56,
+                child: OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFD4D9E2)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF6A7486),
+                    padding: EdgeInsets.zero,
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF101B31),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+                  child: const Icon(Icons.edit_outlined, size: 18),
                 ),
               ),
-              child: const Text('View All Applicants'),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => OwnerApplicationsScreen(requirement: requirement),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF101B31),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: const Text('View All Applications'),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -234,8 +295,10 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
           const SizedBox(height: 8),
           Text(
             body,
