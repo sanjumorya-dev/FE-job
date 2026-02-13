@@ -28,7 +28,7 @@ class OwnerViewModel extends ChangeNotifier {
     // Mock stats for dashboard
     await Future.delayed(const Duration(milliseconds: 300));
     _stats = {
-      'activeReq': '12', 
+      'activeReq': '12',
       'totalApplicants': '48',
       'hiredLabour': '5',
       'completedJobs': '24',
@@ -43,9 +43,8 @@ class OwnerViewModel extends ChangeNotifier {
 
     try {
       _myRequirements = await _apiService
-          .getRequirements(); // TODO: Filter by Owner ID API side or here
+          .getRequirements(); // -TODO: Filter by Owner ID API side or here
       _isLoading = false;
-      debugPrint('Fetched ${_myRequirements.length} requirements for owner.');
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -71,7 +70,8 @@ class OwnerViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateRequirement(String id, CreateRequirementRequest request) async {
+  Future<bool> updateRequirement(
+      String id, CreateRequirementRequest request) async {
     _isLoading = true;
     notifyListeners();
 
@@ -112,7 +112,8 @@ class OwnerViewModel extends ChangeNotifier {
     await Future.delayed(const Duration(milliseconds: 300));
     final index = _applicants.indexWhere((a) => a.id == applicantId);
     if (index != -1) {
-      _applicants[index] = _applicants[index].copyWith(status: ApplicationStatus.accepted);
+      _applicants[index] =
+          _applicants[index].copyWith(status: ApplicationStatus.accepted);
       notifyListeners();
     }
   }
@@ -122,7 +123,8 @@ class OwnerViewModel extends ChangeNotifier {
     await Future.delayed(const Duration(milliseconds: 300));
     final index = _applicants.indexWhere((a) => a.id == applicantId);
     if (index != -1) {
-      _applicants[index] = _applicants[index].copyWith(status: ApplicationStatus.rejected);
+      _applicants[index] =
+          _applicants[index].copyWith(status: ApplicationStatus.rejected);
       notifyListeners();
     }
   }
@@ -130,17 +132,27 @@ class OwnerViewModel extends ChangeNotifier {
   List<Applicant> _generateMockApplicants(String requirementId) {
     return [
       Applicant(
-        id: '1', userId: 'user-1', requirementId: requirementId, workerName: 'Rahul Kumar',
-        gender: 'Male', experienceYears: 5, mobileNumber: '+91 98765 43210',
-        status: ApplicationStatus.pending, appliedDate: DateTime.now(),
+        id: '1',
+        userId: 'user-1',
+        requirementId: requirementId,
+        workerName: 'Rahul Kumar',
+        gender: 'Male',
+        experienceYears: 5,
+        mobileNumber: '+91 98765 43210',
+        status: ApplicationStatus.pending,
+        appliedDate: DateTime.now(),
       ),
       Applicant(
-        id: '2', userId: 'user-2', requirementId: requirementId, workerName: 'Priya Singh',
-        gender: 'Female', experienceYears: 3, mobileNumber: '+91 98765 43211',
-        status: ApplicationStatus.pending, appliedDate: DateTime.now(),
+        id: '2',
+        userId: 'user-2',
+        requirementId: requirementId,
+        workerName: 'Priya Singh',
+        gender: 'Female',
+        experienceYears: 3,
+        mobileNumber: '+91 98765 43211',
+        status: ApplicationStatus.pending,
+        appliedDate: DateTime.now(),
       ),
     ];
   }
 }
-
-

@@ -33,7 +33,7 @@ class WorkConnectButton extends StatelessWidget {
           disabledBackgroundColor: AppColors.disabled,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.sm),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
         child: isLoading
@@ -101,7 +101,7 @@ class WorkConnectOutlineButton extends StatelessWidget {
             width: 1.5,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.sm),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
         child: Row(
@@ -178,7 +178,7 @@ class _WorkConnectTextFieldState extends State<WorkConnectTextField> {
         Text(
           widget.label,
           style: AppTypography.body14Bold.copyWith(
-            color: AppColors.textMain,
+            color: Colors.white,
           ),
         ),
         const SizedBox(height: 8),
@@ -249,7 +249,7 @@ class WorkConnectCard extends StatelessWidget {
       child: Container(
         padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: backgroundColor ?? AppColors.surface,
+          color: backgroundColor ?? AppColors.surfaceSecondary,
           borderRadius: BorderRadius.circular(AppRadii.md),
           border: Border.all(color: AppColors.borderLight),
           boxShadow: withShadow

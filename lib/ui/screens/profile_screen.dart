@@ -35,7 +35,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
 
+        final bottomSafeInset = MediaQuery.of(context).padding.bottom;
+
         return SingleChildScrollView(
+          padding: EdgeInsets.only(bottom: bottomSafeInset + 110),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -181,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
             ],
           ),
         );

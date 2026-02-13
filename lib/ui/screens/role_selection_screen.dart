@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dihaadi_app/ui/screens/auth/login_screen.dart';
 import 'package:dihaadi_app/data/models/user_model.dart';
+import 'package:dihaadi_app/constants/colors.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
@@ -40,7 +41,7 @@ class RoleSelectionScreen extends StatelessWidget {
                         width: 260,
                         height: 320,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
+                          color: AppColors.surfaceSecondary,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Center(
@@ -59,7 +60,7 @@ class RoleSelectionScreen extends StatelessWidget {
                       Text(
                         'Lorem ipsum dolor sit amet elit volutpat consectetur adipiscing',
                         style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: Colors.grey),
+                            ?.copyWith(color: AppColors.textSecondary),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
@@ -113,7 +114,7 @@ class RoleSelectionScreen extends StatelessWidget {
           width: active ? 14 : 8,
           height: 8,
           decoration: BoxDecoration(
-            color: active ? color : Colors.grey.shade300,
+            color: active ? color : AppColors.borderLight,
             borderRadius: BorderRadius.circular(8),
           ),
         );

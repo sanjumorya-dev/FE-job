@@ -41,6 +41,7 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBody: true,
       // Hide AppBar for Dashboard tab
       appBar: _currentIndex == 0
           ? null
@@ -58,61 +59,89 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
               foregroundColor: AppColors.textMain,
             ),
       body: screens[_currentIndex],
+      floatingActionButton: _buildCenterFab(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildModernNavigationBar(),
     );
   }
 
   Widget _buildModernNavigationBar() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, Icons.home, 'Home', 0),
-          _buildNavItem(Icons.work_outline, Icons.work, 'Jobs', 1),
-          _buildNavItem(Icons.person_outline, Icons.person, 'Profile', 2),
-        ],
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _buildNavItem(Icons.home_outlined, Icons.home_rounded, 0),
+            _buildNavItem(Icons.work_outline_rounded, Icons.work_rounded, 1),
+            const SizedBox(width: 56),
+            _buildGhostItem(Icons.notifications_none_rounded),
+            _buildNavItem(Icons.person_outline_rounded, Icons.person_rounded, 2),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavItem(
-      IconData outlinedIcon, IconData filledIcon, String label, int index) {
+  Widget _buildNavItem(IconData outlinedIcon, IconData filledIcon, int index) {
     final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _currentIndex = index);
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => setState(() => _currentIndex = index),
+        child: SizedBox(
+          height: 34,
+          child: Icon(
             isSelected ? filledIcon : outlinedIcon,
-            color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            size: 26,
+            color: isSelected ? AppColors.textMain : AppColors.inactive,
+            size: 20,
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGhostItem(IconData icon) {
+    return Expanded(
+      child: SizedBox(
+        height: 34,
+        child: Icon(icon, color: AppColors.inactive, size: 20),
+      ),
+    );
+  }
+
+  Widget _buildCenterFab() {
+    return Container(
+      width: 62,
+      height: 62,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF2C313A),
+        border: Border.all(color: Colors.white, width: 5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.20),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: IconButton(
+        onPressed: () => setState(() => _currentIndex = 1),
+        icon: const Icon(Icons.add, color: Colors.white, size: 24),
       ),
     );
   }
