@@ -29,13 +29,7 @@ class RecentJobTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(color: AppColors.borderLight),
         ),
         child: Row(
           children: [
@@ -43,10 +37,11 @@ class RecentJobTile extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: AppColors.surfaceSecondary,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.business_outlined, color: AppColors.textSecondary),
+              child: const Icon(Icons.business_outlined,
+                  color: AppColors.textSecondary),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -66,7 +61,8 @@ class RecentJobTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
+                      const Icon(Icons.location_on_outlined,
+                          size: 14, color: AppColors.textSecondary),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -89,9 +85,10 @@ class RecentJobTile extends StatelessWidget {
               children: [
                 if (statusText != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (statusColor ?? AppColors.primary).withOpacity(0.1),
+                      color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
