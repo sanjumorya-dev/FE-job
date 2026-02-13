@@ -65,10 +65,7 @@ class RequirementService {
       body: jsonEncode(request.toJson()),
     );
 
-    print(
-        'Get Requirements Response: ${response.statusCode}, ${response.body}');
     if (response.statusCode == 200) {
-      print('Get Requirements Response: ${response}');
       final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
       final List<dynamic> data = jsonResponse['data']; // Extract data field
       return data.map((e) => Requirement.fromJson(e)).toList();

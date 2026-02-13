@@ -70,9 +70,6 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
           )
           .timeout(const Duration(seconds: 10));
 
-      debugPrint('Work types status: ${response.statusCode}');
-      debugPrint('Work types body: ${response.body}');
-
       if (response.statusCode == 200) {
         final dynamic jsonData = jsonDecode(response.body);
         List<dynamic> data = [];
@@ -84,16 +81,11 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
           data = jsonData['data'] is List ? jsonData['data'] : [];
         }
 
-        debugPrint('Parsed data: $data');
-
         if (mounted) {
           setState(() {
             _workTypes = data.map((w) => WorkType.fromJson(w)).toList();
-            debugPrint('Work types count: ${_workTypes.length}');
-
             if (_workTypes.isNotEmpty && selectedWorkType.isEmpty) {
               selectedWorkType = _workTypes.first.id;
-              debugPrint('Set initial work type: $selectedWorkType');
             }
           });
         }
@@ -133,18 +125,13 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
 
     _searchDebounce = Timer(const Duration(milliseconds: 500), () async {
       try {
-        debugPrint('Searching for: $input');
         final url = '${ApiConfig.placeSearch}?query=$input';
-        debugPrint('API URL: $url');
 
         final response = await http
             .get(
               Uri.parse(url),
             )
             .timeout(const Duration(seconds: 10));
-
-        debugPrint('Response status: ${response.statusCode}');
-        debugPrint('Response body: ${response.body}');
 
         if (response.statusCode == 200) {
           final dynamic jsonResponse = jsonDecode(response.body);
@@ -177,7 +164,6 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
             });
           }
         } else {
-          debugPrint('API error: ${response.statusCode}');
           if (mounted) {
             setState(() {
               _isSearching = false;
@@ -202,18 +188,13 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
   // Get place details and auto-fill fields
   Future<void> _getPlaceDetails(String placeId) async {
     try {
-      debugPrint('Fetching details for place ID: $placeId');
       final url = '${ApiConfig.placeDetails}/$placeId';
-      debugPrint('Details API URL: $url');
 
       final response = await http
           .get(
             Uri.parse(url),
           )
           .timeout(const Duration(seconds: 10));
-
-      debugPrint('Details response status: ${response.statusCode}');
-      debugPrint('Details response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final dynamic jsonResponse = jsonDecode(response.body);
@@ -233,8 +214,6 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
           }
         }
 
-        debugPrint('Extracted place data: $placeData');
-
         String formattedAddress = '';
         String city = '';
         String state = '';
@@ -253,7 +232,6 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
         // Parse address_components array to extract city, state, postal code
         if (placeData['address_components'] is List) {
           final components = placeData['address_components'] as List<dynamic>;
-          debugPrint('Address components count: ${components.length}');
 
           for (var component in components) {
             if (component is! Map<String, dynamic>) continue;
@@ -294,14 +272,12 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
         if (state.isEmpty && placeData['state'] != null) {
           state = placeData['state'].toString();
         }
-        debugPrint('Intermediate - State: $state, Country: $country, Pincode: $pincode');
         if (country.isEmpty && placeData['country'] != null) {
           country = placeData['country'].toString();
         }
         if (pincode.isEmpty && placeData['postal_code'] != null) {
           pincode = placeData['postal_code'].toString();
         }
-debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
         if (mounted) {
           setState(() {
             addressController.text = formattedAddress;
@@ -313,7 +289,6 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
           });
         }
       } else {
-        debugPrint('Place details API error: ${response.statusCode}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -490,7 +465,6 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
                     onChanged: _workTypes.isEmpty
                         ? null
                         : (v) {
-                            debugPrint('Selected work type: $v');
                             setState(() => selectedWorkType = v ?? '');
                           },
                     validator: (v) => v == null || v.isEmpty
