@@ -9,6 +9,7 @@ import 'package:dihaadi_app/ui/widgets/dashboard_header.dart';
 import 'package:dihaadi_app/ui/widgets/stats_grid.dart';
 import 'package:dihaadi_app/ui/widgets/recent_job_tile.dart';
 import 'package:dihaadi_app/ui/screens/owner/edit_requirement_screen.dart';
+import 'package:dihaadi_app/ui/screens/owner/owner_requirement_detail_screen.dart';
 
 class OwnerDashboardNew extends StatefulWidget {
   const OwnerDashboardNew({super.key});
@@ -537,7 +538,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                EditRequirementScreen(requirement: req),
+                                OwnerRequirementDetailScreen(requirement: req),
                           ),
                         );
                       },
