@@ -36,19 +36,23 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
     final screens = [
       _buildDashboard(),
       _buildJobs(),
+      _buildNotifications(),
       ProfileScreen(),
     ];
 
     return Scaffold(
       backgroundColor: AppColors.background,
       extendBody: true,
-      // Hide AppBar for Dashboard tab
       appBar: _currentIndex == 0
           ? null
           : AppBar(
-              title: const Text(
-                'Find Jobs',
-                style: TextStyle(
+              title: Text(
+                _currentIndex == 1
+                    ? 'Requirement'
+                    : _currentIndex == 2
+                        ? 'Notifications'
+                        : 'Profile',
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
@@ -70,7 +74,7 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
       top: false,
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(30),
@@ -84,42 +88,45 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
         ),
         child: Row(
           children: [
-            _buildNavItem(Icons.home_outlined, Icons.home_rounded, 0),
-            _buildNavItem(Icons.work_outline_rounded, Icons.work_rounded, 1),
-            const SizedBox(width: 56),
-            _buildGhostItem(Icons.notifications_none_rounded),
-            _buildNavItem(Icons.person_outline_rounded, Icons.person_rounded, 2),
+            _buildNavTab(Icons.home_outlined, Icons.home_rounded, 'Home', 0),
+            _buildNavTab(Icons.list_alt_outlined, Icons.list_alt_rounded,
+                'Requirement', 1),
+            const SizedBox(width: 64),
+            _buildNavTab(Icons.notifications_none_rounded,
+                Icons.notifications_rounded, 'Notifications', 2),
+            _buildNavTab(Icons.person_outline_rounded, Icons.person_rounded,
+                'Profile', 3),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData outlinedIcon, IconData filledIcon, int index) {
+  Widget _buildNavTab(
+      IconData outlinedIcon, IconData filledIcon, String label, int index) {
     final isSelected = _currentIndex == index;
     return Expanded(
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: () => setState(() => _currentIndex = index),
         child: SizedBox(
-          height: 40,
+          height: 48,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (isSelected)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 4),
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: AppColors.textMain,
-                    shape: BoxShape.circle,
-                  ),
-                ),
               Icon(
                 isSelected ? filledIcon : outlinedIcon,
                 color: isSelected ? AppColors.textMain : AppColors.inactive,
                 size: 20,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                  color: isSelected ? AppColors.textMain : AppColors.inactive,
+                ),
               ),
             ],
           ),
@@ -128,20 +135,11 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
     );
   }
 
-  Widget _buildGhostItem(IconData icon) {
-    return Expanded(
-      child: SizedBox(
-        height: 40,
-        child: Icon(icon, color: AppColors.inactive, size: 20),
-      ),
-    );
-  }
-
   Widget _buildCenterFab() {
     return Container(
-      width: 62,
-      height: 62,
-      margin: const EdgeInsets.only(bottom: 16),
+      width: 64,
+      height: 64,
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: const Color(0xFF2C313A),
@@ -156,7 +154,16 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
       ),
       child: IconButton(
         onPressed: () => setState(() => _currentIndex = 1),
-        icon: const Icon(Icons.close, color: Colors.white, size: 24),
+        icon: const Icon(Icons.add, color: Colors.white, size: 24),
+      ),
+    );
+  }
+
+  Widget _buildNotifications() {
+    return const Center(
+      child: Text(
+        'Notifications coming soon',
+        style: TextStyle(color: AppColors.textSecondary),
       ),
     );
   }
