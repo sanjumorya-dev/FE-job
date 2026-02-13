@@ -68,7 +68,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
       top: false,
       child: Container(
         margin: const EdgeInsets.fromLTRB(22, 0, 22, 16),
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
         decoration: BoxDecoration(
           color: const Color(0xFF101B31),
           borderRadius: BorderRadius.circular(30),
@@ -82,27 +82,23 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
         ),
         child: Row(
           children: [
-            _buildNavTab(Icons.home_outlined, Icons.home_rounded, 'Home', 0),
-            _buildNavTab(Icons.assignment_outlined, Icons.assignment_rounded,
-                'Requirement', 1),
+            _buildNavTab(Icons.home_outlined, Icons.home_rounded, 0),
+            _buildNavTab(Icons.assignment_outlined, Icons.assignment_rounded, 1),
             const SizedBox(width: 68),
             _buildNavTab(Icons.notifications_none_rounded,
-                Icons.notifications_rounded, 'Notifications', 2),
-            _buildNavTab(Icons.person_outline_rounded, Icons.person_rounded,
-                'Profile', 3),
+                Icons.notifications_rounded, 2),
+            _buildNavTab(Icons.person_outline_rounded, Icons.person_rounded, 3),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavTab(
-      IconData outlinedIcon, IconData filledIcon, String label, int index) {
+  Widget _buildNavTab(IconData outlinedIcon, IconData filledIcon, int index) {
     final isSelected = _currentIndex == index;
-    final Color inactive = Colors.white.withValues(alpha: 0.55);
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: () {
           setState(() => _currentIndex = index);
           if (index == 1) {
@@ -110,27 +106,23 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
           }
         },
         child: SizedBox(
-          height: 46,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
+          height: 42,
+          child: Center(
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
                 isSelected ? filledIcon : outlinedIcon,
-                color: isSelected ? Colors.white : inactive,
-                size: 20,
+                color: Colors.white.withValues(alpha: isSelected ? 1 : 0.75),
+                size: 21,
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 9.5,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  color: isSelected ? Colors.white : inactive,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -167,7 +159,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
             context.read<OwnerViewModel>().fetchMyRequirements();
           });
         },
-        icon: const Icon(Icons.add, color: Color(0xFF101B31), size: 26),
+        icon: const Icon(Icons.edit_outlined, color: Color(0xFF101B31), size: 26),
       ),
     );
   }
