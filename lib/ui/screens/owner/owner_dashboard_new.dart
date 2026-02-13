@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dihaadi_app/viewmodels/owner_viewmodel.dart';
 import 'package:dihaadi_app/ui/screens/profile_screen.dart';
-import 'package:dihaadi_app/ui/screens/owner/create_requirement_screen.dart';
 import 'package:dihaadi_app/ui/screens/loading_screen.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 import 'package:dihaadi_app/ui/widgets/dashboard_header.dart';
@@ -39,6 +38,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBody: true,
       // Hide AppBar for Dashboard tab as it has a custom header
       appBar: _currentIndex == 0
           ? null
@@ -49,78 +49,88 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
               foregroundColor: AppColors.textMain,
             ),
       body: screens[_currentIndex],
-      floatingActionButton: _currentIndex == 1
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const CreateRequirementScreen()),
-                );
-              },
-              backgroundColor: AppColors.primary,
-              label: const Text('New Requirement'),
-              icon: const Icon(Icons.add),
-            )
-          : null,
+      floatingActionButton: _buildCenterFab(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildModernNavigationBar(),
     );
   }
 
   Widget _buildModernNavigationBar() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, Icons.home, 'Home', 0),
-          _buildNavItem(Icons.list_alt, Icons.list, 'Requirements', 1),
-          _buildNavItem(Icons.person_outline, Icons.person, 'Profile', 2),
-        ],
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _buildNavItem(Icons.home_outlined, Icons.home_rounded, 0),
+            _buildNavItem(Icons.list_alt_outlined, Icons.list_alt_rounded, 1),
+            const SizedBox(width: 56),
+            _buildNavItem(Icons.event_note_outlined, Icons.event_note_rounded, 1),
+            _buildNavItem(Icons.person_outline_rounded, Icons.person_rounded, 2),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavItem(
-      IconData outlinedIcon, IconData filledIcon, String label, int index) {
+  Widget _buildNavItem(IconData outlinedIcon, IconData filledIcon, int index) {
     final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _currentIndex = index);
-        if (index == 1) {
-          context.read<OwnerViewModel>().fetchMyRequirements();
-        }
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          setState(() => _currentIndex = index);
+          if (index == 1) {
+            context.read<OwnerViewModel>().fetchMyRequirements();
+          }
+        },
+        child: SizedBox(
+          height: 34,
+          child: Icon(
             isSelected ? filledIcon : outlinedIcon,
-            color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            size: 26,
+            color: isSelected ? AppColors.textMain : AppColors.inactive,
+            size: 20,
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterFab() {
+    return Container(
+      width: 62,
+      height: 62,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF2C313A),
+        border: Border.all(color: Colors.white, width: 5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.20),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: IconButton(
+        onPressed: () {
+          setState(() => _currentIndex = 1);
+          context.read<OwnerViewModel>().fetchMyRequirements();
+        },
+        icon: const Icon(Icons.add, color: Colors.white, size: 24),
       ),
     );
   }
