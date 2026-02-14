@@ -17,7 +17,8 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             onSelected: (value) {
               if (value == 'delete') {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -71,7 +72,8 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFFDFF5ED),
                       borderRadius: BorderRadius.circular(6),
@@ -109,17 +111,33 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                _metricTile('Wage / Salary', '₹ ${(requirement.salary ?? 0).toStringAsFixed(0)} / day'),
+                _metricTile(
+                  title: 'Wage / Salary',
+                  value: '₹ ${(requirement.salary ?? 0).toStringAsFixed(0)} / day',
+                  icon: Icons.currency_rupee_rounded,
+                ),
                 const SizedBox(width: 10),
-                _metricTile('Workers Needed', '${requirement.personNeed ?? 0} People'),
+                _metricTile(
+                  title: 'Workers Needed',
+                  value: '${requirement.personNeed ?? 0} People',
+                  icon: Icons.group_outlined,
+                ),
               ],
             ),
             const SizedBox(height: 10),
             Row(
               children: [
-                _metricTile('Duration', '2 Days'),
+                _metricTile(
+                  title: 'Duration',
+                  value: '2 Days',
+                  icon: Icons.access_time_rounded,
+                ),
                 const SizedBox(width: 10),
-                _metricTile('Experience', '1-3 Years'),
+                _metricTile(
+                  title: 'Experience',
+                  value: '1-3 Years',
+                  icon: Icons.workspace_premium_outlined,
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -139,20 +157,36 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     'Required Skills',
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
-                    children: const [
-                      _SkillChip('CCTV Installation'),
-                      _SkillChip('Wiring'),
-                      _SkillChip('Drilling'),
-                      _SkillChip('Configuration'),
+                    children: [
+                      _SkillChip(
+                        'CCTV Installation',
+                        backgroundColor: Color(0xFFD7F5DE),
+                        textColor: Color(0xFF2F8D49),
+                      ),
+                      _SkillChip(
+                        'Wiring',
+                        backgroundColor: Color(0xFFDDEEFF),
+                        textColor: Color(0xFF2D6CA2),
+                      ),
+                      _SkillChip(
+                        'Drilling',
+                        backgroundColor: Color(0xFFD8EAFF),
+                        textColor: Color(0xFF2A5F98),
+                      ),
+                      _SkillChip(
+                        'Configuration',
+                        backgroundColor: Color(0xFFE5F2FF),
+                        textColor: Color(0xFF4371A8),
+                      ),
                     ],
                   ),
                 ],
@@ -233,7 +267,8 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => OwnerApplicationsScreen(requirement: requirement),
+                          builder: (_) =>
+                              OwnerApplicationsScreen(requirement: requirement),
                         ),
                       );
                     },
@@ -254,7 +289,11 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _metricTile(String title, String value) {
+  Widget _metricTile({
+    required String title,
+    required String value,
+    required IconData icon,
+  }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(10),
@@ -265,9 +304,18 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF8A92A5)),
+            Row(
+              children: [
+                Icon(icon, size: 13, color: const Color(0xFF8A92A5)),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    title,
+                    style:
+                        const TextStyle(fontSize: 11, color: Color(0xFF8A92A5)),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 4),
             Text(
@@ -316,20 +364,27 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
 
 class _SkillChip extends StatelessWidget {
   final String text;
-  const _SkillChip(this.text);
+  final Color backgroundColor;
+  final Color textColor;
+
+  const _SkillChip(
+    this.text, {
+    required this.backgroundColor,
+    required this.textColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFE9F1FB),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Color(0xFF5B7498),
+        style: TextStyle(
+          color: textColor,
           fontWeight: FontWeight.w600,
           fontSize: 10,
         ),
