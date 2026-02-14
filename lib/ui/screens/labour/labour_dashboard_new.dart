@@ -63,8 +63,6 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
               foregroundColor: AppColors.textMain,
             ),
       body: screens[_currentIndex],
-      floatingActionButton: _buildCenterFab(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildModernNavigationBar(),
     );
   }
@@ -76,7 +74,7 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
         margin: const EdgeInsets.fromLTRB(22, 0, 22, 16),
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF101B31),
+          color: Colors.black,
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
@@ -90,7 +88,7 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
           children: [
             _buildNavTab(Icons.home_outlined, Icons.home_rounded, 0),
             _buildNavTab(Icons.assignment_outlined, Icons.assignment_rounded, 1),
-            const SizedBox(width: 68),
+            _buildCenterNavButton(),
             _buildNavTab(Icons.notifications_none_rounded,
                 Icons.notifications_rounded, 2),
             _buildNavTab(Icons.person_outline_rounded, Icons.person_rounded, 3),
@@ -132,28 +130,31 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
     );
   }
 
-  Widget _buildCenterFab() {
-    return Container(
-      width: 66,
-      height: 66,
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: const Color(0xFFDDFEF8),
-        border: Border.all(color: const Color(0xFF101B31), width: 4),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.20),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: () {
+  Widget _buildCenterNavButton() {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
           setState(() => _currentIndex = 1);
         },
-        icon: const Icon(Icons.edit_outlined, color: Color(0xFF101B31), size: 26),
+        child: SizedBox(
+          height: 42,
+          child: Center(
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDFEF8),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.search_rounded,
+                color: Colors.black,
+                size: 21,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

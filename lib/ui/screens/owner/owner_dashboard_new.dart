@@ -57,8 +57,6 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
               foregroundColor: AppColors.textMain,
             ),
       body: screens[_currentIndex],
-      floatingActionButton: _buildCenterFab(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildModernNavigationBar(),
     );
   }
@@ -70,7 +68,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
         margin: const EdgeInsets.fromLTRB(22, 0, 22, 16),
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF101B31),
+          color: Colors.black,
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
@@ -84,7 +82,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
           children: [
             _buildNavTab(Icons.home_outlined, Icons.home_rounded, 0),
             _buildNavTab(Icons.assignment_outlined, Icons.assignment_rounded, 1),
-            const SizedBox(width: 68),
+            _buildCenterNavButton(),
             _buildNavTab(Icons.notifications_none_rounded,
                 Icons.notifications_rounded, 2),
             _buildNavTab(Icons.person_outline_rounded, Icons.person_rounded, 3),
@@ -129,25 +127,11 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
     );
   }
 
-  Widget _buildCenterFab() {
-    return Container(
-      width: 66,
-      height: 66,
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: const Color(0xFFDDFEF8),
-        border: Border.all(color: const Color(0xFF101B31), width: 4),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.20),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: () {
+  Widget _buildCenterNavButton() {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -159,7 +143,24 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
             context.read<OwnerViewModel>().fetchMyRequirements();
           });
         },
-        icon: const Icon(Icons.edit_outlined, color: Color(0xFF101B31), size: 26),
+        child: SizedBox(
+          height: 50,
+          child: Center(
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDFEF8),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+              Icons.edit_outlined,
+                color: Colors.black,
+                size: 40,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -331,20 +332,27 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFD4DAE4),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(15),
                 ),
                 child: TabBar(
                   indicator: BoxDecoration(
-                    color: const Color(0xFF2F3A50),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  indicatorPadding: const EdgeInsets.all(4),
+                  indicatorPadding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
                   labelColor: Colors.white,
                   unselectedLabelColor: const Color(0xFF6D7487),
                   labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  indicatorSize: TabBarIndicatorSize.tab,
                   tabs: const [
-                    Tab(text: 'Active'),
-                    Tab(text: 'Closed'),
+                    Tab(
+                      height: 44,
+                      text: 'Active',
+                    ),
+                    Tab(
+                      height: 44,
+                      text: 'Closed',
+                    ),
                   ],
                 ),
               ),
@@ -557,7 +565,7 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2F3A50),
+                        backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
