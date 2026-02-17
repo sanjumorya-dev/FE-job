@@ -9,6 +9,7 @@ import 'package:dihaadi_app/ui/widgets/dashboard_header.dart';
 import 'package:dihaadi_app/ui/widgets/stats_grid.dart';
 import 'package:dihaadi_app/ui/widgets/recent_job_tile.dart';
 import 'package:dihaadi_app/ui/screens/owner/edit_requirement_screen.dart';
+import 'package:dihaadi_app/ui/screens/owner/owner_requirement_detail_screen.dart';
 
 class OwnerDashboardNew extends StatefulWidget {
   const OwnerDashboardNew({super.key});
@@ -34,93 +35,141 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
     final screens = [
       _buildDashboard(),
       _buildRequirements(),
+      _buildNotifications(),
       ProfileScreen(),
     ];
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // Hide AppBar for Dashboard tab as it has a custom header
+      extendBody: true,
       appBar: _currentIndex == 0
           ? null
           : AppBar(
-              title: Text(_currentIndex == 1 ? 'My Requirements' : 'Profile'),
+              title: Text(
+                _currentIndex == 1
+                    ? 'Requirement'
+                    : _currentIndex == 2
+                        ? 'Notifications'
+                        : 'Profile',
+              ),
               elevation: 0,
               backgroundColor: Colors.white,
               foregroundColor: AppColors.textMain,
             ),
       body: screens[_currentIndex],
-      floatingActionButton: _currentIndex == 1
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const CreateRequirementScreen()),
-                );
-              },
-              backgroundColor: AppColors.primary,
-              label: const Text('New Requirement'),
-              icon: const Icon(Icons.add),
-            )
-          : null,
       bottomNavigationBar: _buildModernNavigationBar(),
     );
   }
 
   Widget _buildModernNavigationBar() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, Icons.home, 'Home', 0),
-          _buildNavItem(Icons.list_alt, Icons.list, 'Requirements', 1),
-          _buildNavItem(Icons.person_outline, Icons.person, 'Profile', 2),
-        ],
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(22, 0, 22, 16),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _buildNavTab(Icons.home_outlined, Icons.home_rounded, 0),
+            _buildNavTab(Icons.assignment_outlined, Icons.assignment_rounded, 1),
+            _buildCenterNavButton(),
+            _buildNavTab(Icons.notifications_none_rounded,
+                Icons.notifications_rounded, 2),
+            _buildNavTab(Icons.person_outline_rounded, Icons.person_rounded, 3),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavItem(
-      IconData outlinedIcon, IconData filledIcon, String label, int index) {
+  Widget _buildNavTab(IconData outlinedIcon, IconData filledIcon, int index) {
     final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _currentIndex = index);
-        if (index == 1) {
-          context.read<OwnerViewModel>().fetchMyRequirements();
-        }
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isSelected ? filledIcon : outlinedIcon,
-            color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            size: 26,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          setState(() => _currentIndex = index);
+          if (index == 1) {
+            context.read<OwnerViewModel>().fetchMyRequirements();
+          }
+        },
+        child: SizedBox(
+          height: 42,
+          child: Center(
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isSelected ? filledIcon : outlinedIcon,
+                color: Colors.white.withValues(alpha: isSelected ? 1 : 0.75),
+                size: 21,
+              ),
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterNavButton() {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CreateRequirementScreen(),
+            ),
+          ).then((_) {
+            if (!mounted) return;
+            setState(() => _currentIndex = 1);
+            context.read<OwnerViewModel>().fetchMyRequirements();
+          });
+        },
+        child: SizedBox(
+          height: 50,
+          child: Center(
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDFEF8),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+              Icons.edit_outlined,
+                color: Colors.black,
+                size: 40,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotifications() {
+    return const Center(
+      child: Text(
+        'Notifications coming soon',
+        style: TextStyle(color: AppColors.textSecondary),
       ),
     );
   }
@@ -258,8 +307,6 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
   }
 
   Widget _buildRequirements() {
-    // This can reuse the list logic or be a separate screen
-    // For now, implementing a clean list view
     return Consumer<OwnerViewModel>(
       builder: (context, viewModel, child) {
         if (viewModel.isLoading) return const LoadingScreen();
@@ -268,25 +315,48 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
           length: 2,
           child: Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Requirement',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              ),
               Container(
-                margin: const EdgeInsets.all(16),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFFD4DAE4),
+                  borderRadius: BorderRadius.circular(15),
                 ),
                 child: TabBar(
                   indicator: BoxDecoration(
-                    color: AppColors.primary,
+                    color: Colors.black,
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  indicatorPadding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
                   labelColor: Colors.white,
-                  unselectedLabelColor: AppColors.textSecondary,
+                  unselectedLabelColor: const Color(0xFF6D7487),
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  indicatorSize: TabBarIndicatorSize.tab,
                   tabs: const [
-                    Tab(text: 'Active'),
-                    Tab(text: 'Closed'),
+                    Tab(
+                      height: 44,
+                      text: 'Active',
+                    ),
+                    Tab(
+                      height: 44,
+                      text: 'Closed',
+                    ),
                   ],
                 ),
               ),
+              const SizedBox(height: 8),
               Expanded(
                 child: TabBarView(
                   children: [
@@ -304,8 +374,6 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
 
   Widget _buildRequirementList(OwnerViewModel viewModel,
       {required bool isActive}) {
-    // Filter logic: Active = status 0 or 1? Closed = 2?
-    // Start with all for now or simplified filter
     final filtered = viewModel.myRequirements.where((req) {
       if (isActive) return req.status != 2;
       return req.status == 2;
@@ -313,31 +381,203 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
 
     if (filtered.isEmpty) {
       return Center(
-          child: Text(
-              isActive ? 'No active requirements' : 'No closed requirements'));
+        child: Text(isActive ? 'No active requirements' : 'No closed requirements'),
+      );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 130),
       itemCount: filtered.length,
       itemBuilder: (context, index) {
         final req = filtered[index];
-        return RecentJobTile(
-          title: req.title,
-          subtitle: req.address ?? 'No Location',
-          statusText: isActive ? (req.status == 1 ? 'Hold' : 'Open') : 'Closed',
-          statusColor: isActive
-              ? (req.status == 1 ? Colors.orange : Colors.green)
-              : Colors.red,
-          footerText: 'Posted on ${_formatDate(req.date)}',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EditRequirementScreen(requirement: req),
+        final bool open = req.status == 0;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
-            );
-          },
+            ],
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F2F7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.business_center_outlined,
+                        color: Color(0xFF657189), size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          req.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textMain,
+                            height: 1.15,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          req.address ?? 'No location',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Posted on ${_formatDate(req.date)}',
+                          style: const TextStyle(
+                            color: Color(0xFF9AA1B4),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: open
+                          ? const Color(0xFFDFF5ED)
+                          : const Color(0xFFE8EAF0),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      open ? 'OPEN' : 'CLOSED',
+                      style: TextStyle(
+                        color: open
+                            ? const Color(0xFF208F67)
+                            : const Color(0xFF56607A),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F5FA),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Salary / Wage',
+                              style: TextStyle(
+                                  color: Color(0xFF8A92A5), fontSize: 11)),
+                          const SizedBox(height: 2),
+                          Text(
+                            '₹ ${(req.salary ?? 0).toStringAsFixed(0)}/day',
+                            style: const TextStyle(
+                                color: AppColors.textMain,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('People Needed',
+                              style: TextStyle(
+                                  color: Color(0xFF8A92A5), fontSize: 11)),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${req.personNeed ?? 0} Workers',
+                            style: const TextStyle(
+                                color: AppColors.textMain,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                OwnerRequirementDetailScreen(requirement: req),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF515B73),
+                        side: const BorderSide(color: Color(0xFFD2D8E4)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('View Details'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EditRequirementScreen(requirement: req),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('Edit'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );

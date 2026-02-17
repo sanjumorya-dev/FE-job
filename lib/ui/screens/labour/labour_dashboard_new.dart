@@ -36,18 +36,23 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
     final screens = [
       _buildDashboard(),
       _buildJobs(),
+      _buildNotifications(),
       ProfileScreen(),
     ];
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // Hide AppBar for Dashboard tab
+      extendBody: true,
       appBar: _currentIndex == 0
           ? null
           : AppBar(
-              title: const Text(
-                'Find Jobs',
-                style: TextStyle(
+              title: Text(
+                _currentIndex == 1
+                    ? 'Requirement'
+                    : _currentIndex == 2
+                        ? 'Notifications'
+                        : 'Profile',
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
@@ -63,56 +68,102 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
   }
 
   Widget _buildModernNavigationBar() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, Icons.home, 'Home', 0),
-          _buildNavItem(Icons.work_outline, Icons.work, 'Jobs', 1),
-          _buildNavItem(Icons.person_outline, Icons.person, 'Profile', 2),
-        ],
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(22, 0, 22, 16),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _buildNavTab(Icons.home_outlined, Icons.home_rounded, 0),
+            _buildNavTab(Icons.assignment_outlined, Icons.assignment_rounded, 1),
+            _buildCenterNavButton(),
+            _buildNavTab(Icons.notifications_none_rounded,
+                Icons.notifications_rounded, 2),
+            _buildNavTab(Icons.person_outline_rounded, Icons.person_rounded, 3),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavItem(
-      IconData outlinedIcon, IconData filledIcon, String label, int index) {
+  Widget _buildNavTab(IconData outlinedIcon, IconData filledIcon, int index) {
     final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _currentIndex = index);
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isSelected ? filledIcon : outlinedIcon,
-            color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            size: 26,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          setState(() => _currentIndex = index);
+        },
+        child: SizedBox(
+          height: 42,
+          child: Center(
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isSelected ? filledIcon : outlinedIcon,
+                color: Colors.white.withValues(alpha: isSelected ? 1 : 0.75),
+                size: 21,
+              ),
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterNavButton() {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          setState(() => _currentIndex = 1);
+        },
+        child: SizedBox(
+          height: 42,
+          child: Center(
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDFEF8),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.search_rounded,
+                color: Colors.black,
+                size: 21,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotifications() {
+    return const Center(
+      child: Text(
+        'Notifications coming soon',
+        style: TextStyle(color: AppColors.textSecondary),
       ),
     );
   }
