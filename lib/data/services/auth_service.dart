@@ -11,13 +11,14 @@ class AuthService {
     return prefs.getString('token');
   }
 
-  Future<User> login(String mobileNumber, String password) async {
+  Future<User> login(String mobileNumber, String password, {String? countryCode}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/Auth/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'mobileNumber': mobileNumber,
-        'password': password,
+        'MobileNumber': mobileNumber,
+        'CountryCode': countryCode,
+        'Password': password,
       }),
     );
 
@@ -90,11 +91,11 @@ class AuthService {
   }
 
   /// Sample API: send OTP to mobile
-  Future<bool> sendOtp(String mobileNumber) async {
+  Future<bool> sendOtp(String mobileNumber, {String? countryCode}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/Auth/otpRequest'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'mobileNumber': mobileNumber}),
+      body: jsonEncode({'MobileNumber': mobileNumber, 'CountryCode': countryCode}),
     );
 
     if (response.statusCode == 200) return true;
@@ -102,12 +103,12 @@ class AuthService {
   }
 
   /// Sample API: verify OTP. Returns token string on success (nullable).
-  Future<String?> verifyOtp(String mobileNumber, String otp) async {
+  Future<String?> verifyOtp(String mobileNumber, String otp, {String? countryCode}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/Auth/otpVerify'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(
-          {'mobileNumber': mobileNumber, 'otpCode': otp, 'otpType': 0}),
+          {'MobileNumber': mobileNumber, 'CountryCode': countryCode, 'OtpCode': otp, 'OtpType': 0}),
     );
 
     if (response.statusCode == 200) {
