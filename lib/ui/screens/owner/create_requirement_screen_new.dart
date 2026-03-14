@@ -30,7 +30,7 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
   final countryController = TextEditingController();
 
   // State
-  String? selectedWorkType;
+  List<String> selectedWorkTypeIds = [];
   List<WorkType> workTypes = [];
   int personNeed = 1;
   int maleCount = 0;
@@ -55,7 +55,7 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
         _isLoadingWorkTypes = false;
         // Set first work type as default if available
         if (workTypes.isNotEmpty) {
-          selectedWorkType = workTypes[0].id;
+          selectedWorkTypeIds = [workTypes[0].id];
         }
       });
     } catch (e) {
@@ -99,7 +99,7 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
 
   void _submit() async {
     if (_formKey.currentState!.validate()) {
-      if (selectedWorkType == null) {
+      if (selectedWorkTypeIds.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Please select a work type")));
         return;
@@ -114,7 +114,7 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
       setState(() => _isLoading = true);
 
       final request = CreateRequirementRequest(
-        workTypeId: selectedWorkType!,
+        workTypeIds: selectedWorkTypeIds,
         title: titleController.text.trim(),
         description: descController.text.trim(),
         personNeed: personNeed,
@@ -188,7 +188,7 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
                       children: [
                         // Work Type Dropdown
                         DropdownButtonFormField<String>(
-                          value: selectedWorkType,
+                          value: selectedWorkTypeIds.isNotEmpty ? selectedWorkTypeIds.first : null,
                           decoration: const InputDecoration(
                             labelText: "Work Type",
                             border: OutlineInputBorder(),
@@ -198,7 +198,7 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
                                   value: e.id, child: Text(e.name)))
                               .toList(),
                           onChanged: (v) =>
-                              setState(() => selectedWorkType = v),
+                              setState(() => selectedWorkTypeIds = v == null ? [] : [v]),
                           validator: (v) =>
                               v == null ? "Please select a work type" : null,
                         ),

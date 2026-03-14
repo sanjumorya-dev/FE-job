@@ -4,9 +4,14 @@ import '../../../viewmodels/auth_viewmodel.dart';
 
 class OtpVerifyScreen extends StatefulWidget {
   final String mobileNumber;
+  final String countryCode;
   final void Function(String? token) onVerified;
-  const OtpVerifyScreen(
-      {super.key, required this.mobileNumber, required this.onVerified});
+  const OtpVerifyScreen({
+    super.key,
+    required this.mobileNumber,
+    required this.onVerified,
+    this.countryCode = '+91',
+  });
 
   @override
   State<OtpVerifyScreen> createState() => _OtpVerifyScreenState();
@@ -25,7 +30,10 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
 
   Future<void> _sendOtp() async {
     setState(() => _sending = true);
-    final ok = await context.read<AuthViewModel>().sendOtp(widget.mobileNumber);
+    final ok = await context.read<AuthViewModel>().sendOtp(
+          widget.mobileNumber,
+          countryCode: widget.countryCode,
+        );
     setState(() => _sending = false);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context)
@@ -38,7 +46,11 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
     setState(() => _verifying = true);
     final token = await context
         .read<AuthViewModel>()
-        .verifyOtp(widget.mobileNumber, _otpController.text.trim());
+        .verifyOtp(
+          widget.mobileNumber,
+          _otpController.text.trim(),
+          countryCode: widget.countryCode,
+        );
     setState(() => _verifying = false);
     if (token != null) {
       widget.onVerified(token);
@@ -64,7 +76,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                         TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Text(
-                    'We sent an OTP to ${widget.mobileNumber}. Please enter it below.'),
+                    'We sent an OTP to ${widget.countryCode} ${widget.mobileNumber}. Please enter it below.'),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _otpController,

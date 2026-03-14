@@ -10,6 +10,7 @@ class CreateUserRequest {
   final String? email;
   final File? image;
   final String? mobileNumber;
+  final String? countryCode;
   final String? aadharNo;
   final String password;
   final String? address;
@@ -25,6 +26,7 @@ class CreateUserRequest {
     this.email,
     this.image,
     this.mobileNumber,
+    this.countryCode,
     this.aadharNo,
     required this.password,
     this.address,
@@ -42,6 +44,7 @@ class CreateUserRequest {
       'Email': email,
       'Image': image?.path,
       'MobileNumber': mobileNumber,
+      'CountryCode': countryCode,
       'AadharNo': aadharNo,
       'Password': password,
       'Address': address,
@@ -60,6 +63,7 @@ class User {
   final String name;
   final String? email;
   final String? mobileNumber;
+  final String? countryCode;
   final String? aadharNo;
   final String? roleName;
   final String? referralCode;
@@ -75,6 +79,7 @@ class User {
     required this.name,
     this.email,
     this.mobileNumber,
+    this.countryCode,
     this.aadharNo,
     this.roleName,
     this.referralCode,
@@ -114,6 +119,7 @@ class User {
       name: json['name'] ?? json['Name'] ?? '',
       email: json['email'] ?? json['Email'],
       mobileNumber: json['mobileNumber'] ?? json['MobileNumber'],
+      countryCode: json['countryCode'] ?? json['CountryCode'],
       aadharNo: json['aadharNo'] ?? json['AadharNo'],
       roleName: roleName,
       referralCode: json['referralCode'] ?? json['ReferralCode'],

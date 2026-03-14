@@ -16,14 +16,31 @@ class AuthViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Normalizes mobile numbers by ensuring a leading country code.
-  String _withCountryCode(String mobile, String countryCode) {
-    if (mobile.trim().isEmpty) return mobile;
-    final m = mobile.trim();
-    if (m.startsWith('+')) return m;
-    // Ensure countryCode starts with '+'
-    final cc = countryCode.startsWith('+') ? countryCode : '+$countryCode';
-    return '$cc$m';
+
+  ({String mobile, String countryCode}) _normalizeMobileWithCode(
+    String mobile,
+    String countryCode,
+  ) {
+    final trimmedMobile = mobile.trim();
+    final normalizedCode = countryCode.trim().isEmpty
+        ? '+91'
+        : (countryCode.trim().startsWith('+')
+            ? countryCode.trim()
+            : '+${countryCode.trim()}');
+
+    if (!trimmedMobile.startsWith('+')) {
+      return (mobile: trimmedMobile, countryCode: normalizedCode);
+    }
+
+    final match = RegExp(r'^(\+\d{1,4})(\d+)$').firstMatch(trimmedMobile);
+    if (match != null) {
+      return (
+        mobile: match.group(2) ?? trimmedMobile,
+        countryCode: match.group(1) ?? normalizedCode,
+      );
+    }
+
+    return (mobile: trimmedMobile, countryCode: normalizedCode);
   }
 
   // Check if user is already logged in (persistence)
@@ -59,8 +76,12 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final formatted = _withCountryCode(mobileNumber, countryCode);
-      _currentUser = await _authService.login(formatted, password);
+      final normalized = _normalizeMobileWithCode(mobileNumber, countryCode);
+      _currentUser = await _authService.login(
+        normalized.mobile,
+        password,
+        countryCode: normalized.countryCode,
+      );
       _isLoading = false;
       notifyListeners();
       return true;
@@ -138,8 +159,11 @@ class AuthViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final formatted = _withCountryCode(mobileNumber, countryCode);
-      final ok = await _authService.sendOtp(formatted);
+      final normalized = _normalizeMobileWithCode(mobileNumber, countryCode);
+      final ok = await _authService.sendOtp(
+        normalized.mobile,
+        countryCode: normalized.countryCode,
+      );
       _isLoading = false;
       notifyListeners();
       return ok;
@@ -156,8 +180,12 @@ class AuthViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final formatted = _withCountryCode(mobileNumber, countryCode);
-      final token = await _authService.verifyOtp(formatted, otp);
+      final normalized = _normalizeMobileWithCode(mobileNumber, countryCode);
+      final token = await _authService.verifyOtp(
+        normalized.mobile,
+        otp,
+        countryCode: normalized.countryCode,
+      );
       _isLoading = false;
       notifyListeners();
       return token;
