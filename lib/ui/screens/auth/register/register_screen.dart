@@ -34,6 +34,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController mobileController = TextEditingController();
+  final TextEditingController countryCodeController =
+      TextEditingController(text: '+91');
   final TextEditingController aadharController = TextEditingController();
 
   final TextEditingController addressController = TextEditingController();
@@ -89,7 +91,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final request = CreateUserRequest(
       name: nameController.text,
       email: emailController.text.isNotEmpty ? emailController.text : null,
-      mobileNumber: mobileController.text,
+      mobileNumber: mobileController.text.trim(),
+      countryCode: countryCodeController.text.trim(),
       aadharNo: aadharController.text.isNotEmpty ? aadharController.text : null,
       address: addressController.text,
       city: cityController.text,
@@ -113,6 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         isScrollControlled: true,
         builder: (_) => OtpVerifyScreen(
           mobileNumber: mobileController.text.trim(),
+          countryCode: countryCodeController.text.trim(),
           onVerified: (token) {
             Navigator.of(context).pop(); // close OTP sheet
             if (!mounted) return;
@@ -150,40 +154,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Scaffold(
         backgroundColor: AppColors.backgroundBeige,
         resizeToAvoidBottomInset: true,
-        body: Stack(
-          children: [
-            const Align(
-              alignment: Alignment.topCenter,
-              child: AuthHeader(
-                title: "Sign Up!",
-                subtitle: "Create Account",
-                height: 340,
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              const AuthHeader(
+                title: "Sign Up",
+                subtitle: "Create account",
+                height: 200,
               ),
-            ),
-            // Dot Patterns
-            Positioned.fill(
-              child: _buildDotPatterns(),
-            ),
-            Positioned.fill(
-              child: SingleChildScrollView(
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
                 child: Column(
                   children: [
-                    const SizedBox(height: 240),
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
                           const SizedBox(height: 20),
                           // Custom Progress Indicator
                           Padding(
@@ -220,6 +213,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   nameController: nameController,
                                   emailController: emailController,
                                   mobileController: mobileController,
+                                  countryCodeController: countryCodeController,
                                   aadharController: aadharController,
                                   onImageSelected: (image) =>
                                       selectedImage = image,
@@ -297,68 +291,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 10),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 10),
                   ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );
   }
-
-  Widget _buildDotPatterns() {
-    return Stack(
-      children: [
-        // Top-right dots
-        Positioned(
-          top: 50,
-          right: 20,
-          child: _buildDotGrid(),
-        ),
-        // Bottom-left dots
-        Positioned(
-          bottom: 40,
-          left: 20,
-          child: _buildDotGrid(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDotGrid() {
-    return SizedBox(
-      width: 40,
-      height: 40,
-      child: CustomPaint(
-        painter: _DotGridPainter(),
-      ),
-    );
-  }
-}
-
-class _DotGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary.withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
-
-    const dotRadius = 2.0;
-    const spacing = 8.0;
-
-    for (double x = 0; x < size.width; x += spacing) {
-      for (double y = 0; y < size.height; y += spacing) {
-        canvas.drawCircle(Offset(x, y), dotRadius, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
