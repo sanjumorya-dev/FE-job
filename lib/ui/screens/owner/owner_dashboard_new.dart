@@ -38,116 +38,54 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
       _buildNotifications(),
       ProfileScreen(),
     ];
+    final titles = ['Dashboard', 'Jobs', 'Notifications', 'Profile'];
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      extendBody: true,
-      appBar: _currentIndex == 0
-          ? null
-          : AppBar(
-              title: Text(
-                _currentIndex == 1
-                    ? 'Requirement'
-                    : _currentIndex == 2
-                        ? 'Notifications'
-                        : 'Profile',
-              ),
-              elevation: 0,
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.textMain,
-            ),
+      appBar: AppBar(title: Text(titles[_currentIndex])),
       body: screens[_currentIndex],
-      floatingActionButton: _buildCenterFab(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: _currentIndex == 0 || _currentIndex == 1 ? _buildCenterFab() : null,
       bottomNavigationBar: _buildModernNavigationBar(),
     );
   }
 
   Widget _buildModernNavigationBar() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(22, 0, 22, 16),
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF101B31),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
+    return NavigationBar(
+      selectedIndex: _currentIndex,
+      onDestinationSelected: (index) {
+        setState(() => _currentIndex = index);
+        if (index == 1) {
+          context.read<OwnerViewModel>().fetchMyRequirements();
+        }
+      },
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.dashboard_outlined),
+          selectedIcon: Icon(Icons.dashboard_rounded),
+          label: 'Dashboard',
         ),
-        child: Row(
-          children: [
-            _buildNavTab(Icons.home_outlined, Icons.home_rounded, 0),
-            _buildNavTab(Icons.assignment_outlined, Icons.assignment_rounded, 1),
-            const SizedBox(width: 68),
-            _buildNavTab(Icons.notifications_none_rounded,
-                Icons.notifications_rounded, 2),
-            _buildNavTab(Icons.person_outline_rounded, Icons.person_rounded, 3),
-          ],
+        NavigationDestination(
+          icon: Icon(Icons.assignment_outlined),
+          selectedIcon: Icon(Icons.assignment_rounded),
+          label: 'Jobs',
         ),
-      ),
-    );
-  }
-
-  Widget _buildNavTab(IconData outlinedIcon, IconData filledIcon, int index) {
-    final isSelected = _currentIndex == index;
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () {
-          setState(() => _currentIndex = index);
-          if (index == 1) {
-            context.read<OwnerViewModel>().fetchMyRequirements();
-          }
-        },
-        child: SizedBox(
-          height: 42,
-          child: Center(
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.10)
-                    : Colors.transparent,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isSelected ? filledIcon : outlinedIcon,
-                color: Colors.white.withValues(alpha: isSelected ? 1 : 0.75),
-                size: 21,
-              ),
-            ),
-          ),
+        NavigationDestination(
+          icon: Icon(Icons.notifications_none_rounded),
+          selectedIcon: Icon(Icons.notifications_rounded),
+          label: 'Notifications',
         ),
-      ),
+        NavigationDestination(
+          icon: Icon(Icons.person_outline_rounded),
+          selectedIcon: Icon(Icons.person_rounded),
+          label: 'Profile',
+        ),
+      ],
     );
   }
 
   Widget _buildCenterFab() {
-    return Container(
-      width: 66,
-      height: 66,
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: const Color(0xFFDDFEF8),
-        border: Border.all(color: const Color(0xFF101B31), width: 4),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.20),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: () {
+    return FloatingActionButton.extended(
+      onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -159,8 +97,8 @@ class _OwnerDashboardNewState extends State<OwnerDashboardNew> {
             context.read<OwnerViewModel>().fetchMyRequirements();
           });
         },
-        icon: const Icon(Icons.edit_outlined, color: Color(0xFF101B31), size: 26),
-      ),
+      icon: const Icon(Icons.add),
+      label: const Text('Create Job'),
     );
   }
 
