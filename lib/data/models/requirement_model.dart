@@ -1,5 +1,5 @@
 class CreateRequirementRequest {
-  final String workTypeId;
+  final List<String> workTypeIds;
   final String title;
   final String description;
   final int personNeed;
@@ -14,16 +14,16 @@ class CreateRequirementRequest {
   final String? pincode;
   final String? country;
   final List<String> images;
-  final int? status; // Added for edit
-  final DateTime? date; // Added for edit
+  final int? status;
+  final DateTime? date;
 
   CreateRequirementRequest({
-    required this.workTypeId,
+    required this.workTypeIds,
     required this.title,
     required this.description,
     required this.personNeed,
-    this.maleCount = 0, // Made optional
-    this.femaleCount = 0, // Made optional
+    this.maleCount = 0,
+    this.femaleCount = 0,
     this.dutyStartTime,
     this.dutyEndTime,
     this.salary,
@@ -39,7 +39,7 @@ class CreateRequirementRequest {
 
   Map<String, dynamic> toJson() {
     return {
-      'WorkTypeId': workTypeId,
+      'WorkTypeIds': workTypeIds,
       'Title': title,
       'Description': description,
       'PersonNeed': personNeed,
@@ -60,9 +60,30 @@ class CreateRequirementRequest {
   }
 }
 
+class RequirementWorkType {
+  final String id;
+  final String name;
+  final String description;
+
+  const RequirementWorkType({
+    required this.id,
+    required this.name,
+    required this.description,
+  });
+
+  factory RequirementWorkType.fromJson(Map<String, dynamic> json) {
+    return RequirementWorkType(
+      id: (json['id'] ?? json['Id'] ?? '').toString(),
+      name: (json['name'] ?? json['Name'] ?? '').toString(),
+      description: (json['description'] ?? json['Description'] ?? '').toString(),
+    );
+  }
+}
+
 class Requirement {
   final String id;
-  final String workTypeId;
+  final List<String> workTypeIds;
+  final List<RequirementWorkType> workTypes;
   final String title;
   final String description;
   final DateTime? dutyStartTime;
@@ -71,12 +92,15 @@ class Requirement {
   final int status;
   final int? personNeed;
   final String? address;
-  final String? userId; // Added for Owner/Labour association
-  final DateTime? date; // Creation date
+  final String? userId;
+  final DateTime? date;
+
+  String get workTypeId => workTypeIds.isNotEmpty ? workTypeIds.first : '';
 
   Requirement({
     required this.id,
-    required this.workTypeId,
+    required this.workTypeIds,
+    required this.workTypes,
     required this.title,
     required this.description,
     this.dutyStartTime,
@@ -90,12 +114,28 @@ class Requirement {
   });
 
   factory Requirement.fromJson(Map<String, dynamic> json) {
+    final dynamic workTypeIdsValue = json['workTypeIds'] ?? json['WorkTypeIds'];
+    final List<String> parsedWorkTypeIds = workTypeIdsValue is List
+        ? workTypeIdsValue.map((e) => e.toString()).toList()
+        : [
+            if ((json['workTypeId'] ?? json['WorkTypeId']) != null)
+              (json['workTypeId'] ?? json['WorkTypeId']).toString(),
+          ];
+
+    final dynamic workTypesValue = json['workTypes'] ?? json['WorkTypes'];
+    final List<RequirementWorkType> parsedWorkTypes = workTypesValue is List
+        ? workTypesValue
+            .whereType<Map>()
+            .map((e) => RequirementWorkType.fromJson(Map<String, dynamic>.from(e)))
+            .toList()
+        : const [];
+
     return Requirement(
-      // Map backend response fields
-      id: json['id'] ?? json['Id'] ?? '',
-      workTypeId: json['workTypeId'] ?? json['WorkTypeId'] ?? '',
-      title: json['title'] ?? json['Title'] ?? '',
-      description: json['description'] ?? json['Description'] ?? '',
+      id: (json['id'] ?? json['Id'] ?? '').toString(),
+      workTypeIds: parsedWorkTypeIds,
+      workTypes: parsedWorkTypes,
+      title: (json['title'] ?? json['Title'] ?? '').toString(),
+      description: (json['description'] ?? json['Description'] ?? '').toString(),
       dutyStartTime: json['dutyStartTime'] != null
           ? DateTime.tryParse(json['dutyStartTime'].toString())
           : json['DutyStartTime'] != null
@@ -121,7 +161,14 @@ class Requirement {
           : json['PersonNeed'] != null
               ? (json['PersonNeed'] as num).toInt()
               : null,
-      address: json['fulladdress'] ?? json['fullAddress'],
+      address: (json['fulladdress'] ?? json['fullAddress'] ?? json['address'] ?? json['Address'])
+          ?.toString(),
+      userId: (json['userId'] ?? json['UserId'])?.toString(),
+      date: json['date'] != null
+          ? DateTime.tryParse(json['date'].toString())
+          : json['Date'] != null
+              ? DateTime.tryParse(json['Date'].toString())
+              : null,
     );
   }
 }

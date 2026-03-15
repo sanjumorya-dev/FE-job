@@ -29,7 +29,7 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
   final addressController = TextEditingController();
 
   // State
-  String selectedWorkType = '';
+  List<String> selectedWorkTypeIds = [];
   int personNeed = 1;
   int maleCount = 1;
   int femaleCount = 0;
@@ -91,9 +91,9 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
             _workTypes = data.map((w) => WorkType.fromJson(w)).toList();
             debugPrint('Work types count: ${_workTypes.length}');
 
-            if (_workTypes.isNotEmpty && selectedWorkType.isEmpty) {
-              selectedWorkType = _workTypes.first.id;
-              debugPrint('Set initial work type: $selectedWorkType');
+            if (_workTypes.isNotEmpty && selectedWorkTypeIds.isEmpty) {
+              selectedWorkTypeIds = [_workTypes.first.id];
+              debugPrint('Set initial work type: ${selectedWorkTypeIds.first}');
             }
           });
         }
@@ -381,8 +381,79 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
     });
   }
 
+  Future<void> _showWorkTypeSelector() async {
+    final tempSelection = Set<String>.from(selectedWorkTypeIds);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Select Work Types',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: _workTypes.map((type) {
+                          final selected = tempSelection.contains(type.id);
+                          return CheckboxListTile(
+                            value: selected,
+                            title: Text(type.name),
+                            dense: true,
+                            onChanged: (checked) {
+                              setModalState(() {
+                                if (checked == true) {
+                                  tempSelection.add(type.id);
+                                } else {
+                                  tempSelection.remove(type.id);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() => selectedWorkTypeIds = tempSelection.toList());
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Apply'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _submit() async {
     if (_formKey.currentState!.validate()) {
+      if (selectedWorkTypeIds.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Please select at least one work type")));
+        return;
+      }
+
       if (dutyStartTime == null || dutyEndTime == null) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Please select start and end dates")));
@@ -408,7 +479,7 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
       }
 
       final request = CreateRequirementRequest(
-        workTypeId: selectedWorkType,
+        workTypeIds: selectedWorkTypeIds,
         title: titleController.text.trim(),
         description: descController.text.trim(),
         personNeed: personNeed,
@@ -456,47 +527,57 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Work Type Dropdown
-                  DropdownButtonFormField<String>(
-                    value:
-                        selectedWorkType.isNotEmpty ? selectedWorkType : null,
-                    decoration: InputDecoration(
-                      labelText: "Work Type",
-                      border: const OutlineInputBorder(),
-                      suffixIcon: _workTypes.isEmpty
-                          ? const Padding(
-                              padding: EdgeInsets.all(10.0),
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                  // Work Type Multi-Select
+                  InkWell(
+                    onTap: _workTypes.isEmpty ? null : _showWorkTypeSelector,
+                    borderRadius: BorderRadius.circular(12),
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: "Work Types",
+                        border: const OutlineInputBorder(),
+                        suffixIcon: _workTypes.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.all(10.0),
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 ),
-                              ),
-                            )
-                          : null,
+                              )
+                            : const Icon(Icons.keyboard_arrow_down_rounded),
+                      ),
+                      child: selectedWorkTypeIds.isEmpty
+                          ? const Text('Select work types')
+                          : Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: selectedWorkTypeIds.map((id) {
+                                final item = _workTypes.firstWhere(
+                                  (w) => w.id == id,
+                                  orElse: () => WorkType(id: id, name: id),
+                                );
+                                return Chip(
+                                  label: Text(item.name),
+                                  onDeleted: () {
+                                    setState(() {
+                                      selectedWorkTypeIds.remove(id);
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
                     ),
-                    items: _workTypes.isEmpty
-                        ? [
-                            const DropdownMenuItem(
-                              value: '',
-                              child: Text('Loading work types...'),
-                            )
-                          ]
-                        : _workTypes
-                            .map((e) => DropdownMenuItem(
-                                value: e.id, child: Text(e.name)))
-                            .toList(),
-                    onChanged: _workTypes.isEmpty
-                        ? null
-                        : (v) {
-                            debugPrint('Selected work type: $v');
-                            setState(() => selectedWorkType = v ?? '');
-                          },
-                    validator: (v) => v == null || v.isEmpty
-                        ? "Please select a work type"
-                        : null,
                   ),
+                  if (selectedWorkTypeIds.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6, left: 12),
+                      child: Text(
+                        'Please select at least one work type',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                   const SizedBox(height: 16),
 
                   // Title Field

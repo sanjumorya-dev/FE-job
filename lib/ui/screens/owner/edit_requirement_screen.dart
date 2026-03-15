@@ -53,7 +53,7 @@ class _EditRequirementScreenState extends State<EditRequirementScreen> {
       final request = CreateRequirementRequest(
         title: _titleController.text,
         description: _descriptionController.text,
-        workTypeId: _selectedWorkTypeId!, // Force non-null as it should be selected
+        workTypeIds: [if ((_selectedWorkTypeId ?? '').isNotEmpty) _selectedWorkTypeId!],
         salary: double.tryParse(_salaryController.text),
         personNeed: int.tryParse(_personNeedController.text) ?? 1, // Default to 1 if parsing fails
         address: _addressController.text,

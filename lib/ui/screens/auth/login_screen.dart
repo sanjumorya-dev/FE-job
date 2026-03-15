@@ -73,47 +73,34 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundBeige,
       resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          // Fixed Header Background
-          const Align(
-            alignment: Alignment.topCenter,
-            child: AuthHeader(
-              title: "Log In!",
-              subtitle: "Welcome Back,",
-              height: 340,
+      body: SingleChildScrollView(
+        padding: EdgeInsets.zero,
+        child: Column(
+          children: [
+            const AuthHeader(
+              title: "Log In",
+              subtitle: "Welcome back",
+              height: 200,
             ),
-          ),
-          // Dot Patterns
-          Positioned.fill(
-            child: _buildDotPatterns(),
-          ),
-          // Scrollable Content Overlap
-          Positioned.fill(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  const SizedBox(height: 240),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(24.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                           const SizedBox(height: 10),
                           _buildInputField(
                             controller: _mobileController,
@@ -233,46 +220,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                ],
+                    const SizedBox(height: 10),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDotPatterns() {
-    return Stack(
-      children: [
-        // Top-left dots
-        Positioned(
-          top: 50,
-          left: 20,
-          child: _buildDotGrid(),
+            const SizedBox(height: 32),
+          ],
         ),
-        // Bottom-left dots
-        Positioned(
-          bottom: 40,
-          left: 20,
-          child: _buildDotGrid(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDotGrid() {
-    return SizedBox(
-      width: 40,
-      height: 40,
-      child: CustomPaint(
-        painter: _DotGridPainter(),
       ),
     );
   }
@@ -309,18 +264,18 @@ class _LoginScreenState extends State<LoginScreen> {
               fontSize: 14,
             ),
             filled: true,
-            fillColor: Colors.grey.shade50,
+            fillColor: AppColors.surface,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: AppColors.borderLight),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              borderRadius: BorderRadius.circular(24),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -341,25 +296,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ],
     );
   }
-}
-
-class _DotGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary.withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
-
-    const dotRadius = 2.0;
-    const spacing = 8.0;
-
-    for (double x = 0; x < size.width; x += spacing) {
-      for (double y = 0; y < size.height; y += spacing) {
-        canvas.drawCircle(Offset(x, y), dotRadius, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

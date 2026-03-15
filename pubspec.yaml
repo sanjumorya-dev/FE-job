@@ -14,9 +14,10 @@ dependencies:
   http: ^1.1.0
   intl: ^0.18.1
   shared_preferences: ^2.2.0
-  google_fonts: ^5.1.0
+  google_fonts: ^6.2.1
   image_picker: ^1.0.0
   loading_animation_widget: ^1.2.0
+  lottie: ^3.1.2
 
   # Performance & State Management
   get: ^4.6.6 # Fast routing and state management
@@ -42,3 +43,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/animations/liquid_loader.json

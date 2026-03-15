@@ -9,6 +9,7 @@ class Step1BasicInfo extends StatefulWidget {
   final TextEditingController nameController;
   final TextEditingController emailController;
   final TextEditingController mobileController;
+  final TextEditingController countryCodeController;
   final TextEditingController aadharController;
   final Function(File?) onImageSelected;
 
@@ -18,6 +19,7 @@ class Step1BasicInfo extends StatefulWidget {
     required this.nameController,
     required this.emailController,
     required this.mobileController,
+    required this.countryCodeController,
     required this.aadharController,
     required this.onImageSelected,
   });
@@ -47,18 +49,14 @@ class _Step1BasicInfoState extends State<Step1BasicInfo> {
   @override
   void initState() {
     super.initState();
-    final initial = widget.mobileController.text.trim();
-    if (initial.startsWith('+') && initial.length > 10) {
-      final codeLen = initial.length - 10;
-      _selectedCode = initial.substring(0, codeLen);
-      _digitsController =
-          TextEditingController(text: initial.substring(codeLen));
-    } else {
-      _digitsController = TextEditingController(text: initial);
-    }
-    widget.mobileController.text = '$_selectedCode${_digitsController.text}';
+    _selectedCode = widget.countryCodeController.text.trim().isNotEmpty
+        ? widget.countryCodeController.text.trim()
+        : '+91';
+    _digitsController =
+        TextEditingController(text: widget.mobileController.text.trim());
+    widget.countryCodeController.text = _selectedCode;
     _digitsController.addListener(() {
-      widget.mobileController.text = '$_selectedCode${_digitsController.text}';
+      widget.mobileController.text = _digitsController.text;
     });
   }
 
@@ -185,8 +183,7 @@ class _Step1BasicInfoState extends State<Step1BasicInfo> {
                     if (v == null) return;
                     setState(() {
                       _selectedCode = v;
-                      widget.mobileController.text =
-                          '$_selectedCode${_digitsController.text}';
+                      widget.countryCodeController.text = _selectedCode;
                     });
                   },
                 ),
