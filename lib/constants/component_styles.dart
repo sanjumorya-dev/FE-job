@@ -8,11 +8,11 @@ class AppComponentStyles {
     color: AppColors.surfaceSecondary,
     borderRadius: BorderRadius.circular(12),
     border: Border.all(color: AppColors.borderLight),
-    boxShadow: [
+    boxShadow: const [
       BoxShadow(
         color: AppColors.shadowColor,
         blurRadius: 4,
-        offset: const Offset(0, 2),
+        offset: Offset(0, 2),
       ),
     ],
   );
@@ -93,7 +93,7 @@ class AppComponentStyles {
   );
 
   // Tab Bar Style
-  static BoxDecoration tabBarStyle = BoxDecoration(
+  static BoxDecoration tabBarStyle = const BoxDecoration(
     border: Border(
       bottom: BorderSide(color: AppColors.divider),
     ),

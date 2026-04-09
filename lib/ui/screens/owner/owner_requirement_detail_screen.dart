@@ -155,9 +155,9 @@ class OwnerRequirementDetailScreen extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     'Required Skills',
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),

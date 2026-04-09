@@ -7,6 +7,7 @@ import 'constants/colors.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/owner_viewmodel.dart';
 import 'viewmodels/labour_viewmodel.dart';
+import 'viewmodels/work_type_viewmodel.dart';
 import 'ui/screens/splash_screen.dart';
 
 void main() {
@@ -23,6 +24,7 @@ class DihaadiApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => OwnerViewModel()),
         ChangeNotifierProvider(create: (_) => LabourViewModel()),
+        ChangeNotifierProvider(create: (_) => WorkTypeViewModel()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -30,13 +32,11 @@ class DihaadiApp extends StatelessWidget {
           colorScheme: ColorScheme.light(
             primary: AppColors.primary,
             secondary: AppColors.success,
-            tertiary: AppColors.warningOrange,
-            background: AppColors.background,
+            tertiary: AppColors.warning,
             surface: AppColors.surface,
             error: AppColors.error,
             onPrimary: Colors.white,
             onSecondary: Colors.white,
-            onBackground: AppColors.textMain,
             onSurface: AppColors.textMain,
             onError: Colors.white,
           ),

@@ -254,10 +254,10 @@ class WorkConnectCard extends StatelessWidget {
           border: Border.all(color: AppColors.borderLight),
           boxShadow: withShadow
               ? [
-                  BoxShadow(
+                  const BoxShadow(
                     color: AppColors.shadowColor,
                     blurRadius: 4,
-                    offset: const Offset(0, 2),
+                    offset: Offset(0, 2),
                   ),
                 ]
               : null,

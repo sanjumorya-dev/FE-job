@@ -79,7 +79,7 @@ class _WorkTypeDropdownState extends State<WorkTypeDropdown> {
                   children: [
                     Expanded(
                       child: widget.selectedIds.isEmpty
-                          ? Text(
+                          ? const Text(
                               'Select your skills...',
                               style: TextStyle(
                                 color: AppColors.textSecondary,
@@ -255,7 +255,7 @@ class _DropdownItem extends StatelessWidget {
                           item.description!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 11,
                             height: 1.2,
@@ -337,7 +337,7 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
             color: AppColors.error,
             size: 40,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:dihaadi_app/constants/colors.dart';
+import 'package:dihaadi_app/core/validators.dart';
 
 class Step1BasicInfo extends StatefulWidget {
   final GlobalKey<FormState> formKey;
@@ -73,240 +74,113 @@ class _Step1BasicInfoState extends State<Step1BasicInfo> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            "Sign up",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textMain,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(60),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-                child: _selectedImage != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(60),
-                        child: Image.file(
-                          _selectedImage!,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.camera_alt,
-                            size: 40,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            "Add Photo",
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          TextFormField(
+          _buildTextField(
             controller: widget.nameController,
-            decoration: InputDecoration(
-              labelText: "Full Name",
-              labelStyle: const TextStyle(color: AppColors.textSecondary),
-              prefixIcon:
-                  const Icon(Icons.person, color: AppColors.textSecondary),
-              filled: true,
-              fillColor: Colors.grey.shade50,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: AppColors.primary, width: 2),
-              ),
-            ),
-            style: const TextStyle(color: AppColors.textMain),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]'))
-            ],
+            label: "FULL NAME",
+            hint: "Enter your full name",
+            icon: Icons.person_outline_rounded,
+            validator: (v) => Validators.validateName(v),
+          ),
+          const SizedBox(height: 24),
+          _buildTextField(
+            controller: _digitsController,
+            label: "MOBILE NUMBER",
+            hint: "Enter mobile number",
+            icon: Icons.phone_android_rounded,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             validator: (v) {
               if (v == null || v.isEmpty) return 'Required';
-              if (v.length < 3) return 'Enter Full Name';
-              if (v.contains(RegExp(r'[0-9]'))) return 'Only text allowed';
+              if (v.length != 10) return 'Enter valid 10-digit number';
               return null;
             },
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                  color: Colors.grey.shade50,
-                ),
-                child: DropdownButton<String>(
-                  value: _selectedCode,
-                  underline: const SizedBox.shrink(),
-                  dropdownColor: AppColors.surface,
-                  style: const TextStyle(color: AppColors.textMain),
-                  items: _countryCodes
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() {
-                      _selectedCode = v;
-                      widget.countryCodeController.text = _selectedCode;
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: _digitsController,
-                  decoration: InputDecoration(
-                    labelText: "Phone Number",
-                    labelStyle: const TextStyle(color: AppColors.textSecondary),
-                    prefixIcon:
-                        const Icon(Icons.phone, color: AppColors.textSecondary),
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: AppColors.primary, width: 2),
-                    ),
-                  ),
-                  style: const TextStyle(color: AppColors.textMain),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  // maxLength: 10,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Required';
-                    if (v.length != 10) return 'Enter valid 10-digit mobile';
-                    if (int.tryParse(v) == null) return 'Only digits allowed';
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
+          const SizedBox(height: 24),
+          _buildTextField(
             controller: widget.emailController,
-            decoration: InputDecoration(
-              labelText: "Email Address",
-              labelStyle: const TextStyle(color: AppColors.textSecondary),
-              prefixIcon:
-                  const Icon(Icons.email, color: AppColors.textSecondary),
-              filled: true,
-              fillColor: Colors.grey.shade50,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: AppColors.primary, width: 2),
-              ),
-            ),
-            style: const TextStyle(color: AppColors.textMain),
+            label: "EMAIL ADDRESS",
+            hint: "rahul.sharma@example.com",
+            icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) return null;
-
-              final email = value.trim();
-              final emailRegex = RegExp(
-                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-              );
-
-              if (!emailRegex.hasMatch(email)) {
-                return 'Enter a valid email address';
-              }
-              return null;
-            },
+            validator: (v) => Validators.validateEmail(v),
           ),
-          const SizedBox(height: 16),
-          TextFormField(
+          const SizedBox(height: 24),
+          _buildTextField(
             controller: widget.aadharController,
-            decoration: InputDecoration(
-              labelText: "Aadhar Number",
-              labelStyle: const TextStyle(color: AppColors.textSecondary),
-              prefixIcon:
-                  const Icon(Icons.badge, color: AppColors.textSecondary),
-              filled: true,
-              fillColor: Colors.grey.shade50,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: AppColors.primary, width: 2),
-              ),
-            ),
-            style: const TextStyle(color: AppColors.textMain),
+            label: "AADHAR NUMBER",
+            hint: "1234 5678 9012",
+            icon: Icons.badge_outlined,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             maxLength: 12,
-            validator: (v) {
-              if (v != null && v.length != 12) {
-                return 'Enter valid 12-digit Aadhar';
-              }
-              if (v != null && int.tryParse(v) == null) {
-                return 'Only digits allowed';
-              }
-              return null;
-            },
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            validator: (v) => Validators.validateAadhar(v),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textHint,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          maxLength: maxLength,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.secondary,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 14, fontWeight: FontWeight.normal),
+            prefixIcon: Icon(icon, color: AppColors.textHint, size: 20),
+            filled: true,
+            fillColor: AppColors.inputBackground,
+            counterText: "",
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.error, width: 1),
+            ),
+          ),
+          validator: validator,
+        ),
+      ],
     );
   }
 }

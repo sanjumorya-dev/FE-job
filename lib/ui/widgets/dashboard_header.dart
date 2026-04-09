@@ -27,13 +27,13 @@ class DashboardHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 56, 24, 26),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.waveColor1, AppColors.headerBackground],
+          colors: [AppColors.primary, AppColors.primaryDark],
         ),
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
@@ -71,15 +71,19 @@ class DashboardHeader extends StatelessWidget {
                 height: 52,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.glassStroke, width: 2),
-                  image: DecorationImage(
-                    image: imageUrl != null && imageUrl!.isNotEmpty
-                        ? NetworkImage(imageUrl!)
-                        : const AssetImage('assets/images/placeholder_profile.png')
-                            as ImageProvider,
-                    fit: BoxFit.cover,
-                  ),
+                  border: Border.all(color: Colors.white24, width: 2),
+                  color: Colors.white10,
                 ),
+                child: imageUrl != null && imageUrl!.isNotEmpty
+                    ? ClipOval(
+                        child: Image.network(
+                          imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.person, color: Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.person, color: Colors.white),
               ),
             ],
           ),
@@ -94,8 +98,8 @@ class DashboardHeader extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: Row(
-                    children: const [
+                  child: const Row(
+                    children: [
                       Icon(Icons.search, color: AppColors.textHint, size: 18),
                       SizedBox(width: 8),
                       Text(

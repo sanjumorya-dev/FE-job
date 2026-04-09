@@ -1,60 +1,40 @@
-import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dihaadi_app/constants/api_config.dart';
+import '../../core/http_client.dart';
 
 class CommonService {
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
+  final SecureHttpClient _client = SecureHttpClient();
 
-  Future<Map<String, String>> _getHeaders() async {
-    final token = await _getToken();
-    final headers = <String, String>{
-      'Content-Type': 'multipart/form-data',
-    };
-
-    if (token != null && token.isNotEmpty) {
-      final authToken = token.contains('Bearer') ? token : 'Bearer $token';
-      headers['Authorization'] = authToken;
-    }
-
-    return headers;
-  }
-
+  /// Upload image to server
   Future<String> uploadImage(File file) async {
     try {
-      final uri = Uri.parse(ApiConfig.uploadImage);
-      final request = http.MultipartRequest('POST', uri);
-      
-      request.headers.addAll(await _getHeaders());
-      
-      request.files.add(await http.MultipartFile.fromPath(
-        'file', 
-        file.path,
-      ));
+      final response = await _client.postMultipart(
+        '/common/upload-image',
+        files: [
+          await http.MultipartFile.fromPath('file', file.path),
+        ],
+      );
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
-        if (body is Map<String, dynamic> && body['imageUrl'] != null) {
-          return body['imageUrl'];
-        } else if (body is Map<String, dynamic> && body['data'] != null) {
-             return body['data'];
-        } else if (body is String) {
-            return body;
+      final body = response.body.tryParseJson();
+      if (body != null) {
+        if (body['imageUrl'] != null) {
+          return body['imageUrl'] as String;
         }
-        throw Exception('Invalid response format: ${response.body}');
-      } else {
-        throw Exception('Failed to upload image: ${response.statusCode} - ${response.body}');
+        if (body['data'] != null) {
+          return body['data'].toString();
+        }
       }
+
+      // Handle string response
+      if (response.body.isNotEmpty && !response.body.startsWith('{')) {
+        return response.body;
+      }
+
+      throw Exception('Invalid response format from image upload');
     } catch (e) {
-      throw Exception('Image upload failed: $e');
+      debugPrint('Image upload error: $e');
+      throw Exception('Failed to upload image: $e');
     }
   }
 }

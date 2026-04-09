@@ -1,144 +1,147 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
+import '../../core/http_client.dart';
 import '../models/user_model.dart';
 
 class AuthService {
-  static const String baseUrl = 'https://dihaadi-0lje.onrender.com/api/v1';
+  final SecureHttpClient _client = SecureHttpClient();
 
-  Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
-
+  /// Login with mobile number and password
   Future<User> login(String mobileNumber, String password, {String? countryCode}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/Auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'MobileNumber': mobileNumber,
-        'CountryCode': countryCode,
-        'Password': password,
-      }),
-    );
+    try {
+      final response = await _client.post(
+        '/Auth/login',
+        body: {
+          'MobileNumber': mobileNumber,
+          'CountryCode': countryCode ?? '+91',
+          'Password': password,
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data == null || data is! Map<String, dynamic>) {
+      final data = response.body.tryParseJson();
+      if (data == null) {
         throw Exception('Invalid login response format');
       }
 
-      // Try to extract token from response (handle both top-level and nested)
+      // Extract token from response (handle both top-level and nested)
       String? token = data['token'];
       if (token == null && data['data'] is Map<String, dynamic>) {
-        final dataObj = data['data'] as Map<String, dynamic>;
-        token = dataObj['token'];
+        token = (data['data'] as Map<String, dynamic>)['token'];
       }
 
-      // Save token if found
-      if (token != null && token.isNotEmpty) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
-      } else {
-        throw Exception('No token found in login response: ${response.body}');
+      if (token == null || token.isEmpty) {
+        throw Exception('No token found in login response');
       }
 
-      // Try multiple possible locations for user data
+      // Save token securely
+      await _client.setToken(token);
+
+      // Extract user data from response
       Map<String, dynamic>? userData;
-
-      // Check if user data is directly in response
       if (data['user'] is Map<String, dynamic>) {
-        userData = data['user'] as Map<String, dynamic>;
-      }
-      // Check if the entire response is user data (some APIs return user directly)
-      else if (data.containsKey('id') ||
-          data.containsKey('Id') ||
-          data.containsKey('name') ||
-          data.containsKey('Name')) {
+        userData = data['user'];
+      } else if (data.containsKey('id') || data.containsKey('name')) {
         userData = data;
-      }
-      // Check for nested data object
-      else if (data['data'] is Map<String, dynamic>) {
+      } else if (data['data'] is Map<String, dynamic>) {
         final dataObj = data['data'] as Map<String, dynamic>;
-        if (dataObj['user'] is Map<String, dynamic>) {
-          userData = dataObj['user'] as Map<String, dynamic>;
-        } else {
-          userData = dataObj;
-        }
+        userData = dataObj['user'] as Map<String, dynamic>? ?? dataObj;
       }
 
       if (userData == null) {
-        throw Exception(
-            'User data missing in login response: ${response.body}');
+        throw Exception('User data missing in login response');
       }
 
       return User.fromJson(userData);
-    } else {
-      throw Exception('Failed to login: ${response.body}');
+    } catch (e) {
+      debugPrint('Login error: $e');
+      rethrow;
     }
   }
 
-  Future<void> register(CreateUserRequest request) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/User/create'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(request.toJson()),
-    );
+  /// Register new user
+  Future<Map<String, dynamic>> register(CreateUserRequest request) async {
+    try {
+      final response = await _client.post(
+        '/User/create',
+        body: request.toJson(),
+      );
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to register: \\${response.body}');
+      final data = response.body.tryParseJson();
+      return data ?? {};
+    } catch (e) {
+      debugPrint('Registration error: $e');
+      rethrow;
     }
   }
 
-  /// Sample API: send OTP to mobile
+  /// Send OTP to mobile number
   Future<bool> sendOtp(String mobileNumber, {String? countryCode}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/Auth/otpRequest'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'MobileNumber': mobileNumber, 'CountryCode': countryCode}),
-    );
-
-    if (response.statusCode == 200) return true;
-    return false;
+    try {
+      final response = await _client.post(
+        '/Auth/otpRequest',
+        body: {
+          'MobileNumber': mobileNumber,
+          'CountryCode': countryCode ?? '+91',
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Send OTP error: $e');
+      return false;
+    }
   }
 
-  /// Sample API: verify OTP. Returns token string on success (nullable).
+  /// Verify OTP and return token
   Future<String?> verifyOtp(String mobileNumber, String otp, {String? countryCode}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/Auth/otpVerify'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(
-          {'MobileNumber': mobileNumber, 'CountryCode': countryCode, 'OtpCode': otp, 'OtpType': 0}),
-    );
+    try {
+      final response = await _client.post(
+        '/Auth/otpVerify',
+        body: {
+          'MobileNumber': mobileNumber,
+          'CountryCode': countryCode ?? '+91',
+          'OtpCode': otp,
+          'OtpType': 0,
+        },
+      );
 
-    if (response.statusCode == 200) {
-      try {
-        final data = jsonDecode(response.body);
-        // Try common locations for token
-        if (data is Map<String, dynamic>) {
-          if (data['token'] is String) return data['token'] as String;
-          if (data['data'] is Map && data['data']['token'] is String) {
-            return data['data']['token'] as String;
+      if (response.statusCode == 200) {
+        final data = response.body.tryParseJson();
+        if (data != null) {
+          String? token = data['token'];
+          if (token == null && data['data'] is Map<String, dynamic>) {
+            token = (data['data'] as Map<String, dynamic>)['token'];
+          }
+          if (token != null && token.isNotEmpty) {
+            await _client.setToken(token);
+            return token;
           }
         }
-      } catch (_) {
-        // ignore parse errors
       }
+      return null;
+    } catch (e) {
+      debugPrint('Verify OTP error: $e');
+      return null;
     }
-    return null;
   }
 
-  /// Sample API: reset password
+  /// Reset password with token
   Future<bool> resetPassword(String token, String newPassword) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/Auth/resetPassword'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'token': token, 'newPassword': newPassword}),
-    );
-
-    if (response.statusCode == 200) return true;
-    return false;
+    try {
+      final response = await _client.post(
+        '/Auth/resetPassword',
+        body: {
+          'token': token,
+          'newPassword': newPassword,
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Reset password error: $e');
+      return false;
+    }
   }
 
-  // Additional auth-related APIs can be added here (logout, refresh token, etc.)
+  /// Logout - clear stored token
+  Future<void> logout() async {
+    await _client.clearToken();
+  }
 }

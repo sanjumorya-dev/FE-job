@@ -188,7 +188,7 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
                       children: [
                         // Work Type Dropdown
                         DropdownButtonFormField<String>(
-                          value: selectedWorkTypeIds.isNotEmpty ? selectedWorkTypeIds.first : null,
+                          initialValue: selectedWorkTypeIds.isNotEmpty ? selectedWorkTypeIds.first : null,
                           decoration: const InputDecoration(
                             labelText: "Work Type",
                             border: OutlineInputBorder(),
