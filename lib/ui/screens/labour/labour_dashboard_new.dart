@@ -1,15 +1,19 @@
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import 'package:dihaadi_app/viewmodels/labour_viewmodel.dart';
-import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
-import 'package:dihaadi_app/ui/screens/profile_screen.dart';
-import 'package:dihaadi_app/ui/screens/labour/job_details_screen.dart';
-import 'package:dihaadi_app/ui/screens/loading_screen.dart';
 import 'package:dihaadi_app/constants/colors.dart';
-import 'package:dihaadi_app/ui/widgets/dashboard_header.dart';
-import 'package:dihaadi_app/ui/widgets/stats_grid.dart';
-import 'package:dihaadi_app/ui/widgets/recent_job_tile.dart';
+import 'package:dihaadi_app/ui/screens/labour/job_details_screen.dart';
+import 'package:dihaadi_app/ui/screens/labour/my_applications_screen.dart';
+import 'package:dihaadi_app/ui/screens/labour/worker_chat_list_screen.dart';
+import 'package:dihaadi_app/ui/screens/loading_screen.dart';
+import 'package:dihaadi_app/ui/screens/profile_screen.dart';
+import 'package:dihaadi_app/ui/widgets/worker_dashboard_header.dart';
+import 'package:dihaadi_app/ui/widgets/worker_stats_grid.dart';
+import 'package:dihaadi_app/ui/widgets/worker_status_banner.dart';
+import 'package:dihaadi_app/ui/widgets/job_search_header.dart';
+import 'package:dihaadi_app/ui/widgets/worker_job_card.dart';
+import 'package:dihaadi_app/ui/screens/labour/worker_find_job_screen.dart';
+import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
+import 'package:dihaadi_app/viewmodels/labour_viewmodel.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LabourDashboardNew extends StatefulWidget {
   const LabourDashboardNew({super.key});
@@ -20,43 +24,32 @@ class LabourDashboardNew extends StatefulWidget {
 
 class _LabourDashboardNewState extends State<LabourDashboardNew> {
   int _currentIndex = 0;
+  int _selectedFilterIndex = 0;
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LabourViewModel>().fetchJobs();
-      context.read<LabourViewModel>().fetchDashboardStats();
-      context.read<LabourViewModel>().fetchRecentApplications();
+      final vm = context.read<LabourViewModel>();
+      vm.fetchJobs();
+      vm.fetchDashboardStats();
+      vm.fetchRecentApplications();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final screens = [
-      _buildDashboard(),
-      _buildJobs(),
-      ProfileScreen(),
+      _buildHomeFeed(),
+      const WorkerFindJobScreen(),
+      const MyApplicationsScreen(),
+      const WorkerChatListScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // Hide AppBar for Dashboard tab
-      appBar: _currentIndex == 0
-          ? null
-          : AppBar(
-              title: const Text(
-                'Find Jobs',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-              elevation: 0,
-              centerTitle: false,
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.textMain,
-            ),
       body: screens[_currentIndex],
       bottomNavigationBar: _buildModernNavigationBar(),
     );
@@ -64,60 +57,79 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
 
   Widget _buildModernNavigationBar() {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, -5),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, Icons.home, 'Home', 0),
-          _buildNavItem(Icons.work_outline, Icons.work, 'Jobs', 1),
-          _buildNavItem(Icons.person_outline, Icons.person, 'Profile', 2),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-      IconData outlinedIcon, IconData filledIcon, String label, int index) {
-    final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _currentIndex = index);
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isSelected ? filledIcon : outlinedIcon,
-            color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            size: 26,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: NavigationBarTheme(
+            data: NavigationBarThemeData(
+              indicatorColor: AppColors.primary.withValues(alpha: 0.1),
+              labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  );
+                }
+                return const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textHint,
+                );
+              }),
+              iconTheme: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return const IconThemeData(color: AppColors.primary, size: 24);
+                }
+                return const IconThemeData(color: AppColors.textHint, size: 24);
+              }),
+            ),
+            child: NavigationBar(
+              height: 65,
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) => setState(() => _currentIndex = index),
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.home_rounded),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.search_rounded),
+                  label: 'Jobs',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.assignment_rounded),
+                  label: 'Applied',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.chat_bubble_rounded),
+                  label: 'Chat',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_rounded),
+                  label: 'Profile',
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildDashboard() {
+  Widget _buildHomeFeed() {
     return Consumer<LabourViewModel>(
       builder: (context, viewModel, child) {
         if (viewModel.isLoading) {
@@ -125,253 +137,106 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
         }
 
         final stats = viewModel.stats;
-        final statItems = [
-          StatItem(
-            label: 'Jobs Applied',
-            value: stats['jobsApplied']!,
-            icon: Icons.send_outlined,
-            color: Colors.blue,
-          ),
-          StatItem(
-            label: 'Approved',
-            value: stats['approved']!,
-            icon: Icons.check_circle_outline,
-            color: Colors.green,
-          ),
-          StatItem(
-            label: 'Ongoing',
-            value: stats['ongoing']!,
-            icon: Icons.timelapse,
-            color: Colors.orange,
-          ),
-          StatItem(
-            label: 'Total Earnings',
-            value: '₹${stats['earnings']}',
-            icon: Icons.account_balance_wallet_outlined,
-            color: Colors.purple,
-          ),
-        ];
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Header
-              Consumer<AuthViewModel>(
-                builder: (context, authVM, _) {
-                  final user = authVM.currentUser;
-                  return DashboardHeader(
-                    userName: user?.name ?? 'Labour',
-                    subtitle: 'Skilled worker', // Could be dynamic based on work type if available
-                    isOwner: false,
-                    imageUrl: 'https://ui-avatars.com/api/?name=${user?.name ?? "User"}&background=random',
-                    isAvailable: viewModel.isAvailable,
-                    onAvailabilityChanged: (value) =>
-                        viewModel.toggleAvailability(value),
-                    onNotificationTap: () {
-                      // Handle notification tap
-                    },
-                  );
-                },
-              ),
-
-              // 2. Stats Grid
-              Transform.translate(
-                offset: const Offset(0, -40),
-                child: StatsGrid(stats: statItems),
-              ),
-
-              // 3. Recently Applied
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Recently Applied',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textMain,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                         Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Scaffold(
-                              appBar: AppBar(title: const Text('My Applications')),
-                              body: Consumer<LabourViewModel>(
-                                builder: (context, vm, _) {
-                                  if (vm.recentApplications.isEmpty) {
-                                    return const Center(child: Text('No applications found'));
-                                  }
-                                  return ListView.builder(
-                                    itemCount: vm.recentApplications.length,
-                                    itemBuilder: (context, index) {
-                                      final job = vm.recentApplications[index];
-                                      return RecentJobTile(
-                                        title: job.title,
-                                        subtitle: job.address ?? 'Location TBD',
-                                        statusText: _getStatusText(job.status ?? 0),
-                                        statusColor: _getStatusColor(job.status ?? 0),
-                                        footerText: 'Applied on ${_formatDate(job.date)}', 
-                                        onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => JobDetailsScreen(job: job),
-                                              ),
-                                            );
-                                        },
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      child: const Text('View all'),
-                    ),
-                  ],
-                ),
-              ),
-
-              if (viewModel.recentApplications.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Text('No applications yet'),
-                  ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: viewModel.recentApplications.length,
-                  itemBuilder: (context, index) {
-                    final job = viewModel.recentApplications[index];
-                    return RecentJobTile(
-                      title: job.title,
-                      subtitle: job.address ?? 'Location TBD',
-                      // Use real status from job
-                      statusText: _getStatusText(job.status ?? 0), 
-                      statusColor: _getStatusColor(job.status ?? 0),
-                      footerText: 'Applied on ${_formatDate(job.date)}',
-                      onTap: () {
-                        // Show details
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => JobDetailsScreen(job: job),
-                          ),
-                        );
-                      },
+        return RefreshIndicator(
+          onRefresh: () async {
+            await viewModel.fetchJobs();
+            await viewModel.fetchDashboardStats();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Consumer<AuthViewModel>(
+                  builder: (context, authVm, child) {
+                    final user = authVm.currentUser;
+                    return WorkerDashboardHeader(
+                      userName: user?.name ?? 'Rahul',
+                      location: user?.addresses?.isNotEmpty == true
+                          ? '${user!.addresses![0]['city']}, ${user.addresses![0]['state']}'
+                          : 'Mumbai, Maharashtra',
+                      onNotificationTap: () {},
+                      onProfileTap: () => setState(() => _currentIndex = 3),
                     );
                   },
                 ),
-                const SizedBox(height: 20),
-            ],
+
+                WorkerStatsGrid(
+                  tasksCompleted: int.tryParse(stats['approved'] ?? '28') ?? 28,
+                  requestedJobs: int.tryParse(stats['jobsApplied'] ?? '12') ?? 12,
+                  monthlyEarnings:
+                      double.tryParse(stats['earnings'] ?? '18400') ?? 18400,
+                  averageRating: 4.8,
+                ),
+
+                WorkerStatusBanner(
+                  activeApplications: viewModel.recentApplications.length,
+                  isAvailable: viewModel.isAvailable,
+                  onAvailabilityChanged: (val) =>
+                      viewModel.toggleAvailability(val),
+                ),
+
+                JobSearchHeader(
+                  title: 'Find Jobs',
+                  selectedIndex: _selectedFilterIndex,
+                  filterTabs: [
+                    'Available',
+                    'Applied (${viewModel.recentApplications.length})',
+                    'In Progress (1)',
+                    'Completed'
+                  ],
+                  onTabChanged: (index) => setState(() => _selectedFilterIndex = index),
+                  onSearchChanged: (val) => setState(() => _searchQuery = val),
+                  onFilterTap: () {},
+                ),
+
+                if (viewModel.availableJobs.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(60.0),
+                      child: Column(
+                        children: [
+                          Icon(Icons.search_off_rounded, size: 48, color: AppColors.textHint),
+                          SizedBox(height: 16),
+                          Text(
+                            'No jobs available right now',
+                            style: TextStyle(color: AppColors.textHint, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: viewModel.availableJobs.length,
+                    itemBuilder: (context, index) {
+                      final job = viewModel.availableJobs[index];
+                      return WorkerJobCard(
+                        requirement: job,
+                        isApplied: viewModel.recentApplications
+                            .any((a) => a.id == job.id),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    JobDetailsScreen(job: job)),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         );
       },
     );
   }
-
-  Widget _buildJobs() {
-    return Consumer<LabourViewModel>(
-      builder: (context, viewModel, child) {
-        if (viewModel.isLoading) {
-          return const LoadingScreen();
-        }
-
-         if (viewModel.availableJobs.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.work_outline,
-                  size: 64,
-                  color: AppColors.textSecondary,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'No Jobs Available',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textMain,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: viewModel.availableJobs.length,
-          itemBuilder: (context, index) {
-            final job = viewModel.availableJobs[index];
-            return RecentJobTile(
-               title: job.title,
-               subtitle: job.address ?? 'Location TBD',
-               statusText: 'New',
-               statusColor: Colors.green,
-               footerText: '₹${job.salary ?? "Negotiable"} / day',
-               onTap: () {
-                 Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => JobDetailsScreen(job: job),
-                  ),
-                );
-               },
-            );
-          },
-        );
-      },
-    );
-  }
-  
-  String _formatDate(DateTime? date) {
-    if (date == null) return 'N/A';
-    return DateFormat('dd MMM yyyy').format(date.toLocal());
-  }
-
-  String _getStatusText(int status) {
-    switch (status) {
-      case 0:
-        return 'Pending';
-      case 1:
-        return 'Active';
-      case 2:
-        return 'Completed';
-      case 3:
-        return 'Cancelled';
-      default:
-        return 'Unknown';
-    }
-  }
-
-  Color _getStatusColor(int status) {
-    switch (status) {
-      case 0:
-        return Colors.orange;
-      case 1:
-        return Colors.green;
-      case 2:
-        return Colors.blue;
-      case 3:
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
 }
+

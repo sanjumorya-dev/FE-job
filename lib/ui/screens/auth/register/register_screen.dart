@@ -7,11 +7,10 @@ import 'package:dihaadi_app/viewmodels/work_type_viewmodel.dart';
 import 'steps/step1_basic_info.dart';
 import 'steps/step2_address_info.dart';
 import 'steps/step3_role_info.dart';
-// import '../login_screen.dart';
+import '../login_screen.dart';
 import '../otp_verify_screen.dart';
-import 'package:dihaadi_app/ui/screens/owner/owner_dashboard.dart';
-import 'package:dihaadi_app/ui/screens/labour/labour_dashboard.dart';
-import 'package:dihaadi_app/ui/widgets/auth_header.dart';
+import 'package:dihaadi_app/ui/screens/owner/owner_dashboard_new.dart';
+import 'package:dihaadi_app/ui/screens/labour/labour_dashboard_new.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -34,6 +33,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController mobileController = TextEditingController();
+  final TextEditingController countryCodeController =
+      TextEditingController(text: '+91');
   final TextEditingController aadharController = TextEditingController();
 
   final TextEditingController addressController = TextEditingController();
@@ -63,7 +64,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (_currentStep == 2 && selectedRole == UserRole.worker) {
         if (selectedWorkTypes.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Please select at least one skill")),
+            const SnackBar(
+              content: Text("Please select at least one skill"),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.error,
+            ),
           );
           return;
         }
@@ -80,16 +85,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _prevStep() {
     if (_currentStep > 0) {
       setState(() => _currentStep--);
+    } else {
+      Navigator.pop(context);
     }
   }
 
+  String _getStepTitle() {
+    switch (_currentStep) {
+      case 0:
+        return "Personal Details";
+      case 1:
+        return "Address Details";
+      case 2:
+        return "Role & Security";
+      default:
+        return "";
+    }
+  }
+
+  String _getStepSubtitle() {
+    switch (_currentStep) {
+      case 0:
+        return "Tell us about yourself to get started.";
+      case 1:
+        return "Where are you located? (Auto-fill available)";
+      case 2:
+        return "Choose your role and set a secure password.";
+      default:
+        return "";
+    }
+  }
+
+  @override
   void _submit() async {
     setState(() => _isLoading = true);
 
     final request = CreateUserRequest(
       name: nameController.text,
       email: emailController.text.isNotEmpty ? emailController.text : null,
-      mobileNumber: mobileController.text,
+      mobileNumber: mobileController.text.trim(),
+      countryCode: countryCodeController.text.trim(),
       aadharNo: aadharController.text.isNotEmpty ? aadharController.text : null,
       address: addressController.text,
       city: cityController.text,
@@ -107,38 +142,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = false);
 
     if (success && mounted) {
-      // After successful registration, prompt user to verify OTP
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (_) => OtpVerifyScreen(
-          mobileNumber: mobileController.text.trim(),
-          onVerified: (token) {
-            Navigator.of(context).pop(); // close OTP sheet
-            if (!mounted) return;
-            // Navigate straight to dashboard based on selected role
-            if (selectedRole == UserRole.owner) {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const OwnerDashboard()),
-                (route) => false,
-              );
-            } else {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const LabourDashboard()),
-                (route) => false,
-              );
-            }
-          },
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OtpVerifyScreen(
+            mobileNumber: mobileController.text.trim(),
+            countryCode: countryCodeController.text.trim(),
+            onVerified: (token) {
+              Navigator.of(context).pop(); // close OTP screen
+              Navigator.of(context).pop(); // close register screen
+
+              if (!mounted) return;
+
+              if (selectedRole == UserRole.owner) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const OwnerDashboardNew()),
+                  (route) => false,
+                );
+              } else {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LabourDashboardNew()),
+                  (route) => false,
+                );
+              }
+            },
+          ),
         ),
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
-                context.read<AuthViewModel>().error ?? "Registration failed")),
+          content: Text(context.read<AuthViewModel>().error ?? "Registration failed"),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }
@@ -148,217 +187,210 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return ChangeNotifierProvider(
       create: (_) => WorkTypeViewModel(),
       child: Scaffold(
-        backgroundColor: AppColors.backgroundBeige,
-        resizeToAvoidBottomInset: true,
-        body: Stack(
-          children: [
-            const Align(
-              alignment: Alignment.topCenter,
-              child: AuthHeader(
-                title: "Sign Up!",
-                subtitle: "Create Account",
-                height: 340,
-              ),
-            ),
-            // Dot Patterns
-            Positioned.fill(
-              child: _buildDotPatterns(),
-            ),
-            Positioned.fill(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 240),
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildHeader(),
+                      const SizedBox(height: 32),
+                      _buildProgressBar(),
+                      const SizedBox(height: 32),
+                      IndexedStack(
+                        index: _currentStep,
                         children: [
-                          const SizedBox(height: 20),
-                          // Custom Progress Indicator
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 40, vertical: 10),
-                            child: Row(
-                              children: List.generate(
-                                  3,
-                                  (index) => Expanded(
-                                        child: Container(
-                                          height: 4,
-                                          margin: const EdgeInsets.symmetric(
-                                              horizontal: 4),
-                                          decoration: BoxDecoration(
-                                            color: index <= _currentStep
-                                                ? AppColors.primary
-                                                : Colors.grey.shade200,
-                                            borderRadius:
-                                                BorderRadius.circular(2),
-                                          ),
-                                        ),
-                                      )),
-                            ),
+                          Step1BasicInfo(
+                            formKey: _formKeys[0],
+                            nameController: nameController,
+                            emailController: emailController,
+                            mobileController: mobileController,
+                            countryCodeController: countryCodeController,
+                            aadharController: aadharController,
+                            onImageSelected: (image) => selectedImage = image,
                           ),
-                          // Form Steps
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 16),
-                            child: IndexedStack(
-                              index: _currentStep,
-                              children: [
-                                Step1BasicInfo(
-                                  formKey: _formKeys[0],
-                                  nameController: nameController,
-                                  emailController: emailController,
-                                  mobileController: mobileController,
-                                  aadharController: aadharController,
-                                  onImageSelected: (image) =>
-                                      selectedImage = image,
-                                ),
-                                Step2AddressInfo(
-                                  formKey: _formKeys[1],
-                                  addressController: addressController,
-                                  cityController: cityController,
-                                  stateController: stateController,
-                                  pincodeController: pincodeController,
-                                  countryController: countryController,
-                                ),
-                                Step3RoleInfo(
-                                  formKey: _formKeys[2],
-                                  passwordController: passwordController,
-                                  confirmPasswordController:
-                                      confirmPasswordController,
-                                  isWorker: selectedRole == UserRole.worker,
-                                  onWorkTypesChanged: (types) =>
-                                      selectedWorkTypes = types,
-                                  onRoleChanged: (role) =>
-                                      setState(() => selectedRole = role),
-                                ),
-                              ],
-                            ),
+                          Step2AddressInfo(
+                            formKey: _formKeys[1],
+                            addressController: addressController,
+                            cityController: cityController,
+                            stateController: stateController,
+                            pincodeController: pincodeController,
+                            countryController: countryController,
                           ),
-                          // Navigation Buttons
-                          Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Row(
-                              children: [
-                                if (_currentStep > 0)
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 16.0),
-                                    child: IconButton(
-                                      onPressed: _prevStep,
-                                      icon: const Icon(Icons.arrow_back_ios,
-                                          color: Colors.grey),
-                                    ),
-                                  ),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: _isLoading ? null : _nextStep,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 16),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                    ),
-                                    child: _isLoading
-                                        ? const SizedBox(
-                                            height: 24,
-                                            width: 24,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : Text(
-                                            _currentStep == 2
-                                                ? "Sign Up"
-                                                : "Next",
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: 1,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          Step3RoleInfo(
+                            formKey: _formKeys[2],
+                            passwordController: passwordController,
+                            confirmPasswordController: confirmPasswordController,
+                            isWorker: selectedRole == UserRole.worker,
+                            onWorkTypesChanged: (types) => selectedWorkTypes = types,
+                            onRoleChanged: (role) => setState(() => selectedRole = role),
                           ),
-                          const SizedBox(height: 10),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 40),
-                  ],
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              _buildBottomAction(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDotPatterns() {
-    return Stack(
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Top-right dots
-        Positioned(
-          top: 50,
-          right: 20,
-          child: _buildDotGrid(),
+        GestureDetector(
+          onTap: _prevStep,
+          child: Container(
+            height: 40,
+            width: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.black, size: 18),
+          ),
         ),
-        // Bottom-left dots
-        Positioned(
-          bottom: 40,
-          left: 20,
-          child: _buildDotGrid(),
+        const SizedBox(height: 24),
+        Text(
+          'STEP ${_currentStep + 1} OF 3',
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textHint,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _getStepTitle(),
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: AppColors.secondary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          _getStepSubtitle(),
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+            height: 1.5,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildDotGrid() {
-    return SizedBox(
-      width: 40,
-      height: 40,
-      child: CustomPaint(
-        painter: _DotGridPainter(),
+  Widget _buildProgressBar() {
+    return Stack(
+      children: [
+        Container(
+          height: 6,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.primaryLight,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: 6,
+          width: MediaQuery.of(context).size.width * ((_currentStep + 1) / 3) - 48,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomAction() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, -5),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _nextStep,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                  : Text(
+                      _currentStep == 2 ? "Complete Registration" : "Continue",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+            ),
+          ),
+          if (_currentStep == 0) ...[
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Already have an account? ",
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LoginScreen(role: widget.role),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Log In",
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
-}
-
-class _DotGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary.withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
-
-    const dotRadius = 2.0;
-    const spacing = 8.0;
-
-    for (double x = 0; x < size.width; x += spacing) {
-      for (double y = 0; y < size.height; y += spacing) {
-        canvas.drawCircle(Offset(x, y), dotRadius, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

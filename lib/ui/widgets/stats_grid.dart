@@ -5,7 +5,7 @@ class StatItem {
   final String label;
   final String value;
   final IconData icon;
-  final Color color; // Background color for icon container
+  final Color color;
 
   StatItem({
     required this.label,
@@ -18,12 +18,13 @@ class StatItem {
 class StatsGrid extends StatelessWidget {
   final List<StatItem> stats;
 
-  const StatsGrid({super.key, required this.stats});
+  const StatsGrid({
+    super.key,
+    required this.stats,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (stats.isEmpty) return const SizedBox.shrink();
-
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -35,23 +36,20 @@ class StatsGrid extends StatelessWidget {
         childAspectRatio: 1.1,
       ),
       itemCount: stats.length,
-      itemBuilder: (context, index) {
-        final item = stats[index];
-        return _buildStatCard(item);
-      },
+      itemBuilder: (context, index) => _buildStatCard(stats[index]),
     );
   }
 
   Widget _buildStatCard(StatItem item) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -63,10 +61,10 @@ class StatsGrid extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: item.color.withOpacity(0.15),
+              color: const Color(0x24FFFFFF),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(item.icon, color: item.color, size: 24),
+            child: Icon(item.icon, color: Colors.white, size: 20),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,7 +74,7 @@ class StatsGrid extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textMain,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 4),
@@ -84,7 +82,7 @@ class StatsGrid extends StatelessWidget {
                 item.label,
                 style: const TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: Color(0xFFD8DCE6),
                   height: 1.2,
                 ),
               ),

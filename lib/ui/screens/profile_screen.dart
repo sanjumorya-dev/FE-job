@@ -27,7 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, viewModel, child) {
         final user = viewModel.currentUser;
         if (user == null) {
-          return Center(
+          return const Center(
             child: Text(
               "Not logged in",
               style: TextStyle(color: AppColors.textMain),
@@ -35,7 +35,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
 
+        final bottomSafeInset = MediaQuery.of(context).padding.bottom;
+
         return SingleChildScrollView(
+          padding: EdgeInsets.only(bottom: bottomSafeInset + 110),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -50,14 +53,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // Profile Avatar
                     Container(
                       alignment: Alignment.center,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: CircleAvatar(
+                      child: const CircleAvatar(
                         radius: 48,
                         backgroundColor: AppColors.surface,
-                        child: const Icon(
+                        child: Icon(
                           Icons.person,
                           size: 48,
                           color: AppColors.primary,
@@ -181,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
             ],
           ),
         );
@@ -225,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.chevron_right,
                   color: AppColors.textSecondary,
                   size: 24,

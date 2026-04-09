@@ -23,6 +23,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController countryCtrl;
 
   late String originalMobile;
+  late String _countryCode;
   bool _isSubmitting = false;
   bool _isMobileChanged = false;
   bool _mobileVerified = false;
@@ -36,6 +37,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     aadharCtrl = TextEditingController(text: widget.user.aadharNo ?? '');
     mobileCtrl = TextEditingController(text: widget.user.mobileNumber ?? '');
     originalMobile = widget.user.mobileNumber ?? '';
+    _countryCode = (widget.user.countryCode ?? '+91').trim();
 
     // Address fields
     final addr = widget.user.addresses?.isNotEmpty == true
@@ -84,7 +86,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     // Send OTP
     setState(() => _mobileError = null);
     final authVm = context.read<AuthViewModel>();
-    final otpSent = await authVm.sendOtp(newMobile);
+    final otpSent = await authVm.sendOtp(newMobile, countryCode: _countryCode);
 
     if (!otpSent && mounted) {
       setState(() => _mobileError = 'Failed to send OTP');
@@ -99,12 +101,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       barrierDismissible: false,
       builder: (context) => _OtpVerificationDialog(
         mobileNumber: newMobile,
+        countryCode: _countryCode,
       ),
     );
 
     if (otp != null && mounted) {
       // Verify OTP
-      final token = await authVm.verifyOtp(newMobile, otp);
+      final token = await authVm.verifyOtp(newMobile, otp, countryCode: _countryCode);
       if (token != null && mounted) {
         setState(() {
           _mobileVerified = true;
@@ -139,6 +142,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'Email': emailCtrl.text.trim(),
         'AadharNo': aadharCtrl.text.trim(),
         if (_isMobileChanged) 'MobileNumber': mobileCtrl.text.trim(),
+        'CountryCode': _countryCode,
         'Address': addressCtrl.text.trim(),
         'City': cityCtrl.text.trim(),
         'State': stateCtrl.text.trim(),
@@ -360,8 +364,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
 class _OtpVerificationDialog extends StatefulWidget {
   final String mobileNumber;
+  final String countryCode;
 
-  const _OtpVerificationDialog({required this.mobileNumber});
+  const _OtpVerificationDialog({
+    required this.mobileNumber,
+    required this.countryCode,
+  });
 
   @override
   State<_OtpVerificationDialog> createState() => _OtpVerificationDialogState();
@@ -397,7 +405,11 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
 
     final authVm = context.read<AuthViewModel>();
     final token =
-        await authVm.verifyOtp(widget.mobileNumber, otpCtrl.text.trim());
+        await authVm.verifyOtp(
+          widget.mobileNumber,
+          otpCtrl.text.trim(),
+          countryCode: widget.countryCode,
+        );
 
     setState(() => _isVerifying = false);
 
@@ -417,7 +429,7 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('We sent an OTP to ${widget.mobileNumber}'),
+          Text('We sent an OTP to ${widget.countryCode} ${widget.mobileNumber}'),
           const SizedBox(height: 16),
           TextField(
             controller: otpCtrl,

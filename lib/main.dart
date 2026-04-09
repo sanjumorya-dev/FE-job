@@ -7,6 +7,7 @@ import 'constants/colors.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/owner_viewmodel.dart';
 import 'viewmodels/labour_viewmodel.dart';
+import 'viewmodels/work_type_viewmodel.dart';
 import 'ui/screens/splash_screen.dart';
 
 void main() {
@@ -23,6 +24,7 @@ class DihaadiApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => OwnerViewModel()),
         ChangeNotifierProvider(create: (_) => LabourViewModel()),
+        ChangeNotifierProvider(create: (_) => WorkTypeViewModel()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -30,22 +32,22 @@ class DihaadiApp extends StatelessWidget {
           colorScheme: ColorScheme.light(
             primary: AppColors.primary,
             secondary: AppColors.success,
-            tertiary: AppColors.warningOrange,
-            background: AppColors.background,
+            tertiary: AppColors.warning,
             surface: AppColors.surface,
             error: AppColors.error,
             onPrimary: Colors.white,
             onSecondary: Colors.white,
-            onBackground: AppColors.textMain,
             onSurface: AppColors.textMain,
             onError: Colors.white,
           ),
+          cardColor: AppColors.surface,
           useMaterial3: true,
           scaffoldBackgroundColor: AppColors.background,
           appBarTheme: AppBarTheme(
-            backgroundColor: Colors.white,
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
             foregroundColor: AppColors.textMain,
-            elevation: 0.5,
+            elevation: 0,
             centerTitle: false,
             titleTextStyle: GoogleFonts.inter(
               fontSize: 18,
@@ -82,25 +84,25 @@ class DihaadiApp extends StatelessWidget {
               ),
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surface,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide(color: AppColors.borderLight),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide(color: AppColors.error),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide(color: AppColors.error, width: 2),
             ),
             contentPadding:
@@ -121,9 +123,10 @@ class DihaadiApp extends StatelessWidget {
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
+              shadowColor: Colors.transparent,
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(24),
               ),
               textStyle: GoogleFonts.inter(
                 fontSize: 15,
@@ -137,7 +140,7 @@ class DihaadiApp extends StatelessWidget {
               side: BorderSide(color: AppColors.primary, width: 1.5),
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(24),
               ),
               textStyle: GoogleFonts.inter(
                 fontSize: 15,
@@ -163,12 +166,27 @@ class DihaadiApp extends StatelessWidget {
           ),
           chipTheme: ChipThemeData(
             backgroundColor: AppColors.background,
-            selectedColor: AppColors.primary,
+            selectedColor: AppColors.primaryLight,
             labelStyle: GoogleFonts.inter(
               fontSize: 12,
               color: AppColors.textMain,
             ),
             side: BorderSide(color: AppColors.border),
+          ),
+          cardTheme: CardThemeData(
+            color: AppColors.surface,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.borderLight),
+            ),
+          ),
+          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+            backgroundColor: AppColors.surface,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.textSecondary,
+            selectedIconTheme: const IconThemeData(size: 24),
+            unselectedIconTheme: const IconThemeData(size: 22),
           ),
           dividerTheme: DividerThemeData(
             color: AppColors.divider,

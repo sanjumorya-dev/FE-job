@@ -10,80 +10,58 @@ class AuthHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
-    this.height = 320, // Increased default height for waves
+    this.height = 200,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: height,
-      child: ClipPath(
-        clipper: _HeaderClipper(),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.primary, // Orange to match design
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (subtitle != null) ...[
-                  Text(
-                    subtitle!,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.link,
+                  size: 18,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textMain,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 6),
                 Text(
-                  title,
+                  subtitle!,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const Spacer(),
               ],
-            ),
+            ],
           ),
         ),
       ),
     );
   }
-}
-
-class _HeaderClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, size.height - 40); // Start slightly up from bottom-left
-    
-    // Smoother curve with gentle slope
-    path.quadraticBezierTo(
-      size.width * 0.3, // Control point X (closer to left for gentle start)
-      size.height + 40, // Control point Y (deeper for rounder curve)
-      size.width * 0.7, // Mid point X
-      size.height - 20, // Mid point Y
-    );
-    
-    path.quadraticBezierTo(
-      size.width * 0.85, // Control point X (smooth transition to right)
-      size.height - 60, // Control point Y (rise up)
-      size.width, // End point X
-      size.height - 80, // End point Y (higher on right)
-    );
-    
-    path.lineTo(size.width, 0); // Top-right
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

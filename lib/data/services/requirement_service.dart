@@ -1,49 +1,33 @@
 import 'dart:convert';
-import 'package:flutter/rendering.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
+import '../../core/http_client.dart';
 import '../models/requirement_model.dart';
 
 class RequirementService {
-  static const String baseUrl = 'https://dihaadi-0lje.onrender.com/api/v1';
+  final SecureHttpClient _client = SecureHttpClient();
 
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
-
-  Future<Map<String, String>> _getHeaders() async {
-    final token = await _getToken();
-    return {
-      'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
-    };
-  }
-
+  /// Create new requirement
   Future<void> createRequirement(CreateRequirementRequest request) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/Requirement/create'),
-      headers: await _getHeaders(),
-      body: jsonEncode(request.toJson()),
-    );
-
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to create requirement: ${response.body}');
+    try {
+      await _client.post('/Requirement/create', body: request.toJson());
+    } catch (e) {
+      debugPrint('Create requirement error: $e');
+      rethrow;
     }
   }
 
-  Future<void> updateRequirement(String id, CreateRequirementRequest request) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/Requirement/$id'),
-      headers: await _getHeaders(),
-      body: jsonEncode(request.toJson()),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update requirement: ${response.body}');
+  /// Update existing requirement
+  Future<void> updateRequirement(
+      String id, CreateRequirementRequest request) async {
+    try {
+      await _client.put('/Requirement/$id', body: request.toJson());
+    } catch (e) {
+      debugPrint('Update requirement error: $e');
+      rethrow;
     }
   }
 
+  /// Get requirements with filters
   Future<List<Requirement>> getRequirements({
     int status = 0,
     String? search,
@@ -51,67 +35,85 @@ class RequirementService {
     int page = 1,
     int limit = 10,
   }) async {
-    final request = OwnerRequirementsRequest(
-      status: status,
-      search: search,
-      workTypeId: workTypeId,
-      page: page,
-      limit: limit,
-    );
+    try {
+      final request = OwnerRequirementsRequest(
+        status: status,
+        search: search,
+        workTypeId: workTypeId,
+        page: page,
+        limit: limit,
+      );
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/Requirement/Owner'),
-      headers: await _getHeaders(),
-      body: jsonEncode(request.toJson()),
-    );
+      final response = await _client.post(
+        '/Requirement/Owner',
+        body: request.toJson(),
+      );
 
-    print(
-        'Get Requirements Response: ${response.statusCode}, ${response.body}');
-    if (response.statusCode == 200) {
-      print('Get Requirements Response: ${response}');
-      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      final List<dynamic> data = jsonResponse['data']; // Extract data field
-      return data.map((e) => Requirement.fromJson(e)).toList();
-    } else {
-      throw Exception('Failed to fetch requirements: ${response.body}');
+      final body = response.body.tryParseJson();
+      if (body != null && body['data'] is List) {
+        return (body['data'] as List)
+            .map((e) => Requirement.fromJson(e))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Get requirements error: $e');
+      rethrow;
     }
   }
+
+  /// Apply for a requirement
   Future<void> applyForRequirement(String requirementId) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/Requirement/apply/$requirementId'),
-      headers: await _getHeaders(),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to apply for requirement: ${response.body}');
+    try {
+      await _client.post('/Requirement/apply/$requirementId');
+    } catch (e) {
+      debugPrint('Apply for requirement error: $e');
+      rethrow;
     }
   }
 
+  /// Get user's applications
   Future<List<Requirement>> getMyApplications() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/Requirement/my-applications'),
-      headers: await _getHeaders(),
-    );
+    try {
+      final response = await _client.get('/Requirement/my-applications');
+      final dynamic body = jsonDecode(response.body);
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((e) => Requirement.fromJson(e)).toList();
-    } else {
-      throw Exception('Failed to fetch applications: ${response.body}');
+      if (body is List) {
+        return body
+            .map((e) => Requirement.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+
+      if (body is Map<String, dynamic> && body['data'] is List) {
+        return (body['data'] as List)
+            .map((e) => Requirement.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('Get applications error: $e');
+      rethrow;
     }
   }
 
+  /// Get requirement by ID
   Future<Requirement> getRequirementById(String id) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/Requirement/$id'),
-      headers: await _getHeaders(),
-    );
+    try {
+      final response = await _client.get('/Requirement/$id');
+      final body = response.body.tryParseJson();
 
-    if (response.statusCode == 200) {
-      final dynamic data = jsonDecode(response.body);
-      return Requirement.fromJson(data);
-    } else {
-      throw Exception('Failed to fetch requirement details: ${response.body}');
+      if (body != null) {
+        // Handle nested data field
+        if (body['data'] != null) {
+          return Requirement.fromJson(body['data']);
+        }
+        return Requirement.fromJson(body);
+      }
+      throw Exception('Invalid response format');
+    } catch (e) {
+      debugPrint('Get requirement by ID error: $e');
+      rethrow;
     }
   }
 }

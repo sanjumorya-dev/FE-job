@@ -31,7 +31,7 @@ class _LabourDashboardState extends State<LabourDashboard> {
     final screens = [
       _buildDashboard(),
       _buildJobs(),
-      ProfileScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
@@ -96,7 +96,7 @@ class _LabourDashboardState extends State<LabourDashboard> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [Color(0xFFFF6B9D), Color(0xFFFA8072)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -149,10 +149,10 @@ class _LabourDashboardState extends State<LabourDashboard> {
               ),
               const SizedBox(height: 24),
               // Recent Jobs
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Recent Jobs',
                     style: TextStyle(
                       fontSize: 18,
@@ -172,9 +172,9 @@ class _LabourDashboardState extends State<LabourDashboard> {
               ),
               const SizedBox(height: 12),
               if (viewModel.availableJobs.isEmpty)
-                Center(
+                const Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    padding: EdgeInsets.all(32.0),
                     child: Text(
                       'No jobs available right now',
                       style: TextStyle(color: AppColors.textSecondary),
@@ -232,7 +232,7 @@ class _LabourDashboardState extends State<LabourDashboard> {
                                     color: AppColors.success.withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: Text(
+                                  child: const Text(
                                     'New',
                                     style: TextStyle(
                                       color: AppColors.success,
@@ -248,7 +248,7 @@ class _LabourDashboardState extends State<LabourDashboard> {
                               job.description,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: AppColors.textSecondary,
                               ),
@@ -273,7 +273,7 @@ class _LabourDashboardState extends State<LabourDashboard> {
                                     const SizedBox(width: 4),
                                     Text(
                                       job.address ?? 'Location',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: AppColors.textSecondary,
                                         fontSize: 12,
                                       ),
@@ -303,17 +303,17 @@ class _LabourDashboardState extends State<LabourDashboard> {
         }
 
         if (viewModel.availableJobs.isEmpty) {
-          return Center(
+          return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.work_outline,
                   size: 64,
                   color: AppColors.textSecondary,
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: 16),
+                Text(
                   'No Jobs Available',
                   style: TextStyle(
                     fontSize: 18,
@@ -321,7 +321,7 @@ class _LabourDashboardState extends State<LabourDashboard> {
                     color: AppColors.textMain,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   'Check back later for new opportunities',
                   style: TextStyle(color: AppColors.textSecondary),
@@ -376,7 +376,7 @@ class _LabourDashboardState extends State<LabourDashboard> {
                                 job.description,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
                                 ),
@@ -412,7 +412,7 @@ class _LabourDashboardState extends State<LabourDashboard> {
                             const SizedBox(width: 4),
                             Text(
                               job.address ?? 'Location TBD',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),

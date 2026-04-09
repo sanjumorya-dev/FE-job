@@ -33,7 +33,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     final screens = [
       _buildDashboard(),
       _buildRequirements(),
-      ProfileScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
@@ -117,7 +117,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [Color(0xFF7B68EE), Color(0xFF5A4FCF)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -180,9 +180,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               ),
               const SizedBox(height: 12),
               if (viewModel.myRequirements.isEmpty)
-                Center(
+                const Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    padding: EdgeInsets.all(32.0),
                     child: Text(
                       'No requirements posted yet',
                       style: TextStyle(color: AppColors.textSecondary),
@@ -400,17 +400,17 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         }
 
         if (viewModel.myRequirements.isEmpty) {
-          return Center(
+          return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.work_outline,
                   size: 64,
                   color: AppColors.textSecondary,
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: 16),
+                Text(
                   'No Requirements Yet',
                   style: TextStyle(
                     fontSize: 18,
@@ -418,7 +418,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     color: AppColors.textMain,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   'Post your first requirement to hire workers',
                   style: TextStyle(color: AppColors.textSecondary),
@@ -474,7 +474,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                                 req.description,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
                                 ),
@@ -493,7 +493,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           ),
                           child: Text(
                             '${req.personNeed ?? 0} needed',
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: AppColors.success,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -513,7 +513,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                             const SizedBox(width: 4),
                             Text(
                               req.address ?? 'Location TBD',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),

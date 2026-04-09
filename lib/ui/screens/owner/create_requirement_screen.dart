@@ -9,6 +9,8 @@ import 'dart:async';
 import 'package:dihaadi_app/constants/api_config.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dihaadi_app/data/services/common_service.dart';
+import 'package:dihaadi_app/viewmodels/work_type_viewmodel.dart';
+import 'package:dihaadi_app/constants/colors.dart';
 import 'dart:io';
 
 class CreateRequirementScreen extends StatefulWidget {
@@ -29,7 +31,7 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
   final addressController = TextEditingController();
 
   // State
-  String selectedWorkType = '';
+  List<String> selectedWorkTypeIds = [];
   int personNeed = 1;
   int maleCount = 1;
   int femaleCount = 0;
@@ -39,7 +41,6 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
   bool _isLoading = false;
   List<PlacePrediction> _placePredictions = [];
   bool _showPredictions = false;
-  List<WorkType> _workTypes = [];
   String? _selectedCity;
   String? _selectedState;
   String? _selectedCountry;
@@ -58,51 +59,18 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
   void initState() {
     super.initState();
     _addressFocusNode = FocusNode();
-    _fetchWorkTypes();
-  }
-
-  // Fetch work types from API
-  Future<void> _fetchWorkTypes() async {
-    try {
-      final response = await http
-          .get(
-            Uri.parse(ApiConfig.getWorkTypes),
-          )
-          .timeout(const Duration(seconds: 10));
-
-      debugPrint('Work types status: ${response.statusCode}');
-      debugPrint('Work types body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final dynamic jsonData = jsonDecode(response.body);
-        List<dynamic> data = [];
-
-        // Handle different response formats
-        if (jsonData is List) {
-          data = jsonData;
-        } else if (jsonData is Map && jsonData['data'] != null) {
-          data = jsonData['data'] is List ? jsonData['data'] : [];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WorkTypeViewModel>().fetchWorkTypes().then((_) {
+        if (mounted && selectedWorkTypeIds.isEmpty) {
+          final types = context.read<WorkTypeViewModel>().workTypes;
+          if (types.isNotEmpty) {
+            setState(() {
+              selectedWorkTypeIds = [types.first.id];
+            });
+          }
         }
-
-        debugPrint('Parsed data: $data');
-
-        if (mounted) {
-          setState(() {
-            _workTypes = data.map((w) => WorkType.fromJson(w)).toList();
-            debugPrint('Work types count: ${_workTypes.length}');
-
-            if (_workTypes.isNotEmpty && selectedWorkType.isEmpty) {
-              selectedWorkType = _workTypes.first.id;
-              debugPrint('Set initial work type: $selectedWorkType');
-            }
-          });
-        }
-      } else {
-        debugPrint('Failed to fetch work types: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Fetch work types error: $e');
-    }
+      });
+    });
   }
 
   @override
@@ -381,8 +349,15 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
     });
   }
 
+
   void _submit() async {
     if (_formKey.currentState!.validate()) {
+      if (selectedWorkTypeIds.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Please select at least one work type")));
+        return;
+      }
+
       if (dutyStartTime == null || dutyEndTime == null) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Please select start and end dates")));
@@ -401,14 +376,16 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
         }
       } catch (e) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to upload images: $e")),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to upload images: $e")),
+          );
+        }
         return;
       }
 
       final request = CreateRequirementRequest(
-        workTypeId: selectedWorkType,
+        workTypeIds: selectedWorkTypeIds,
         title: titleController.text.trim(),
         description: descController.text.trim(),
         personNeed: personNeed,
@@ -427,17 +404,19 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
         images: imageUrls,
       );
 
-      final success =
-          await context.read<OwnerViewModel>().createRequirement(request);
+      final ownerViewModel = context.read<OwnerViewModel>();
+      final success = await ownerViewModel.createRequirement(request);
+      
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (success && mounted) {
+      if (success) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Requirement Created Successfully!")));
-      } else if (mounted) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(context.read<OwnerViewModel>().error ??
+            content: Text(ownerViewModel.error ??
                 "Failed to create requirement")));
       }
     }
@@ -446,445 +425,701 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Create Requirement")),
-      body: Stack(
+      backgroundColor: const Color(0xFFF8F9FB),
+      body: SafeArea(
+        child: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 1. Custom Header
+                    _buildHeader(),
+                    
+                    const SizedBox(height: 20),
+                    // 2. Intro Banner
+                    _buildIntroBanner(),
+                    
+                    const SizedBox(height: 30),
+                    
+                    // 3. Basic Details Section
+                    _buildSectionHeader("Basic details", "Required"),
+                    const SizedBox(height: 12),
+                    _buildBasicDetailsSection(),
+                    
+                    const SizedBox(height: 30),
+                    
+                    // 4. Job Info Section
+                    _buildSectionHeader("Job info", "Premium form"),
+                    const SizedBox(height: 12),
+                    _buildJobInfoSection(),
+                    
+                    const SizedBox(height: 30),
+                    
+                    // 5. Images Section
+                    _buildSectionHeader("Images", "Optional"),
+                    const SizedBox(height: 12),
+                    _buildImagesSection(),
+                    
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+      ),
+      bottomNavigationBar: _buildBottomBar(),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Work Type Dropdown
-                  DropdownButtonFormField<String>(
-                    value:
-                        selectedWorkType.isNotEmpty ? selectedWorkType : null,
-                    decoration: InputDecoration(
-                      labelText: "Work Type",
-                      border: const OutlineInputBorder(),
-                      suffixIcon: _workTypes.isEmpty
-                          ? const Padding(
-                              padding: EdgeInsets.all(10.0),
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            )
-                          : null,
-                    ),
-                    items: _workTypes.isEmpty
-                        ? [
-                            const DropdownMenuItem(
-                              value: '',
-                              child: Text('Loading work types...'),
-                            )
-                          ]
-                        : _workTypes
-                            .map((e) => DropdownMenuItem(
-                                value: e.id, child: Text(e.name)))
-                            .toList(),
-                    onChanged: _workTypes.isEmpty
-                        ? null
-                        : (v) {
-                            debugPrint('Selected work type: $v');
-                            setState(() => selectedWorkType = v ?? '');
-                          },
-                    validator: (v) => v == null || v.isEmpty
-                        ? "Please select a work type"
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
+          Container(
+            height: 40,
+            width: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back, color: Colors.black, size: 18),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Owner workspace',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF9AA1B4),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                'Create Requirement',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 19,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-                  // Title Field
-                  TextFormField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: "Job Title",
-                      hintText: "e.g. Site Supervisor",
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (v) => v!.isEmpty ? "Title is required" : null,
+  Widget _buildIntroBanner() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F5FA),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Post requirement in\none clean form',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2F3A50),
+                  height: 1.2,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2182F3),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Single form',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 16),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Add core job info, worker count, dates, and site details with less scrolling.',
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFF6D7487),
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                  // Description Field
-                  TextFormField(
-                    controller: descController,
-                    decoration: const InputDecoration(
-                      labelText: "Description",
-                      hintText: "Job description and responsibilities",
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                    validator: (v) =>
-                        v!.isEmpty ? "Description is required" : null,
-                  ),
-                  const SizedBox(height: 16),
+  Widget _buildSectionHeader(String title, String badge) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2F3A50),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F5FA),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            badge,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF9AA1B4),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-                  // Salary Field
-                  TextFormField(
-                    controller: salaryController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "Salary (₹)",
-                      hintText: "Monthly salary",
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+  Widget _buildInputContainer({required Widget child, Color? color}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color ?? const Color(0xFFF3F5FA),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: child,
+    );
+  }
 
-                  // Address Field with Search
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextFormField(
-                        controller: addressController,
-                        focusNode: _addressFocusNode,
-                        decoration: InputDecoration(
-                          labelText: "Address",
-                          hintText: "Search and select address",
-                          border: const OutlineInputBorder(),
-                          suffixIcon: _isSearching
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: Padding(
-                                    padding: EdgeInsets.all(10.0),
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                )
-                              : null,
-                        ),
-                        onChanged: (value) => _searchPlaces(value),
-                        validator: (v) =>
-                            v!.isEmpty ? "Address is required" : null,
+  Widget _buildBasicDetailsSection() {
+    return Column(
+      children: [
+        // Work Types
+        _buildInputContainer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'WORK TYPES',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHint,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Consumer<WorkTypeViewModel>(
+                builder: (context, viewModel, child) {
+                  if (viewModel.isLoading && viewModel.workTypes.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-                      if (_showPredictions && _placePredictions.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Card(
-                          elevation: 8,
-                          margin: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(4),
-                              color: Colors.white,
-                            ),
-                            constraints: const BoxConstraints(maxHeight: 280),
-                            child: ListView.separated(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              itemCount: _placePredictions.length,
-                              separatorBuilder: (context, index) =>
-                                  const Divider(height: 1, thickness: 0.5),
-                              itemBuilder: (context, index) {
-                                final prediction = _placePredictions[index];
-                                return Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      debugPrint(
-                                          'Selected: ${prediction.placeId}');
-                                      // Dismiss keyboard
-                                      FocusScope.of(context).unfocus();
-                                      // Fetch place details
-                                      _getPlaceDetails(prediction.placeId);
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 12),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            prediction.mainText,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.black87,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            prediction.secondaryText,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ] else if (_isSearching) ...[
-                        const SizedBox(height: 8),
-                        const Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-
-
-                  // Image Upload Section
-                  const Text(
-                    "Images (Max 3)",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
+                    );
+                  }
+                  return Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: [
-                      ..._selectedImages.asMap().entries.map((entry) {
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                image: DecorationImage(
-                                  image: FileImage(File(entry.value.path)),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: -4,
-                              right: -4,
-                              child: InkWell(
-                                onTap: () => _removeImage(entry.key),
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  padding: const EdgeInsets.all(2),
-                                  child: const Icon(
-                                    Icons.close,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                      if (_selectedImages.length < 3)
-                        InkWell(
-                          onTap: _pickImage,
-                          child: Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey[400]!),
-                            ),
-                            child: const Icon(Icons.add_a_photo,
-                                color: Colors.grey),
+                    children: viewModel.workTypes.map((type) {
+                      final isSelected = selectedWorkTypeIds.contains(type.id);
+                      return FilterChip(
+                        label: Text(type.name),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              selectedWorkTypeIds.add(type.id);
+                            } else {
+                              selectedWorkTypeIds.remove(type.id);
+                            }
+                          });
+                        },
+                        selectedColor: AppColors.primary,
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : AppColors.secondary,
+                          fontSize: 12,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        backgroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: isSelected ? AppColors.primary : Colors.grey.shade200,
                           ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Job Title
+        _buildInputContainer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Job title', style: TextStyle(fontSize: 12, color: Color(0xFF9AA1B4), fontWeight: FontWeight.w500)),
+              TextFormField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  hintText: 'Enter job title',
+                  hintStyle: TextStyle(color: Color(0xFF728EAC), fontSize: 16),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(vertical: 6),
+                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF4A5568), fontWeight: FontWeight.w500),
+                validator: (v) => v!.isEmpty ? 'Title is required' : null,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Description
+        _buildInputContainer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Description', style: TextStyle(fontSize: 12, color: Color(0xFF9AA1B4), fontWeight: FontWeight.w500)),
+              TextFormField(
+                controller: descController,
+                maxLines: null,
+                decoration: const InputDecoration(
+                  hintText: 'Describe the work, site condition, tools, timing, and expectations for selected workers.',
+                  hintStyle: TextStyle(color: Color(0xFF728EAC), height: 1.5, fontSize: 13),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(vertical: 8),
+                ),
+                style: const TextStyle(fontSize: 15, color: Color(0xFF4A5568), height: 1.5),
+                validator: (v) => v!.isEmpty ? 'Description is required' : null,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-                  // People Requirements Section
-                  const Text(
-                    "People Requirements",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+  Widget _buildJobInfoSection() {
+    return Column(
+      children: [
+        // Salary
+        _buildInputContainer(
+          child: Row(
+            children: [
+              Container(
+                height: 48,
+                width: 48,
+                decoration: BoxDecoration(color: const Color(0xFFF3F5FA), borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.currency_rupee, size: 22, color: Color(0xFF9AA1B4)),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Salary', style: TextStyle(fontSize: 12, color: Color(0xFF9AA1B4), fontWeight: FontWeight.w500)),
+                    TextFormField(
+                      controller: salaryController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter daily wage in ₹',
+                        hintStyle: TextStyle(color: Color(0xFF728EAC), fontSize: 16),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 4),
+                      ),
+                      style: const TextStyle(fontSize: 16, color: Color(0xFF4A5568), fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Total Needed Counter
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Total Needed"),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => setState(
-                                () => personNeed > 1 ? personNeed-- : null),
-                            icon: const Icon(Icons.remove),
-                          ),
-                          Text(
-                            "$personNeed",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => setState(() => personNeed++),
-                            icon: const Icon(Icons.add),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Male Count
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Male"),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => setState(
-                                () => maleCount > 0 ? maleCount-- : null),
-                            icon: const Icon(Icons.remove),
-                          ),
-                          Text(
-                            "$maleCount",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              if (maleCount + femaleCount < personNeed) {
-                                setState(() => maleCount++);
-                              }
-                            },
-                            icon: const Icon(Icons.add),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Female Count
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Female"),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => setState(
-                                () => femaleCount > 0 ? femaleCount-- : null),
-                            icon: const Icon(Icons.remove),
-                          ),
-                          Text(
-                            "$femaleCount",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              if (maleCount + femaleCount < personNeed) {
-                                setState(() => femaleCount++);
-                              }
-                            },
-                            icon: const Icon(Icons.add),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Duty Duration Section
-                  const Text(
-                    "Duty Duration",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _selectDate(context, true),
-                          child: InputDecorator(
-                            decoration:
-                                const InputDecoration(labelText: "Start Date"),
-                            child: Text(dutyStartTime != null
-                                ? DateFormat('dd/MM/yyyy')
-                                    .format(dutyStartTime!)
-                                : "Select Date"),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _selectDate(context, false),
-                          child: InputDecorator(
-                            decoration:
-                                const InputDecoration(labelText: "End Date"),
-                            child: Text(dutyEndTime != null
-                                ? DateFormat('dd/MM/yyyy').format(dutyEndTime!)
-                                : "Select Date"),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Submit Button
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Address
+        _buildInputContainer(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                height: 48,
+                width: 48,
+                decoration: BoxDecoration(color: const Color(0xFFF3F5FA), borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.location_on_outlined, size: 22, color: Color(0xFF9AA1B4)),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Address',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF9AA1B4),
+                                fontWeight: FontWeight.w500)),
+                        if (_isSearching)
+                          const SizedBox(
+                            height: 12,
+                            width: 12,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            "Create Requirement",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.primary),
                             ),
                           ),
+                      ],
+                    ),
+                    TextFormField(
+                      controller: addressController,
+                      focusNode: _addressFocusNode,
+                      onChanged: _searchPlaces,
+                      decoration: const InputDecoration(
+                        hintText: 'Add city, area, or full a...',
+                        hintStyle: TextStyle(color: Color(0xFF728EAC), fontSize: 14),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 4),
+                      ),
+                      style: const TextStyle(
+                          fontSize: 14, color: Color(0xFF4A5568), height: 1.2),
+                      validator: (v) => v!.isEmpty ? 'Address is required' : null,
+                    ),
+                    if (_showPredictions && _placePredictions.isNotEmpty)
+                       _buildAddressPredictions(),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {}, // TODO: GPS logic
+                child: Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(color: const Color(0xFFF3F5FA), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.near_me_outlined, size: 20, color: Color(0xFF9AA1B4)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Counters
+        Row(
+          children: [
+            Expanded(child: _buildCounterBox("Male\nrequired", maleCount, Icons.person_outline_rounded, (v) => setState(() => maleCount = v), (maleCount + femaleCount < personNeed))),
+            const SizedBox(width: 8),
+            Expanded(child: _buildCounterBox("Female\nrequired", femaleCount, Icons.group_outlined, (v) => setState(() => femaleCount = v), (maleCount + femaleCount < personNeed))),
+            const SizedBox(width: 8),
+            Expanded(child: _buildCounterBox("Total\nneeded", personNeed, Icons.work_outline_rounded, (v) => setState(() => personNeed = v), true)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        
+        // Dates
+        Row(
+          children: [
+            Expanded(
+              child: _buildDateBox("Start date", dutyStartTime, () => _selectDate(context, true)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildDateBox("End date", dutyEndTime, () => _selectDate(context, false)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCounterBox(String label, int value, IconData icon, ValueChanged<int> onChanged, bool canIncrease) {
+    return _buildInputContainer(
+      child: Column(
+        children: [
+          Container(
+            height: 36,
+            width: 36,
+            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            child: Icon(icon, size: 18, color: const Color(0xFF9AA1B4)),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label, 
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 10, color: Color(0xFF9AA1B4), fontWeight: FontWeight.w500, height: 1.2),
+          ),
+          const SizedBox(height: 12),
+          Text('$value', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2F3A50))),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: () { if (value > 0) onChanged(value - 1); },
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6)),
+                  child: const Icon(Icons.remove, size: 14, color: Color(0xFF2F3A50)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () { if (canIncrease) onChanged(value + 1); },
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(color: const Color(0xFF2F3A50), borderRadius: BorderRadius.circular(6)),
+                  child: const Icon(Icons.add, size: 14, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateBox(String label, DateTime? date, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: _buildInputContainer(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF9AA1B4), fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  Text(
+                    date != null ? DateFormat('dd MMM, yyyy').format(date) : 'Select date',
+                    style: TextStyle(
+                      fontSize: 13, 
+                      fontWeight: FontWeight.bold, 
+                      color: date != null ? const Color(0xFF2182F3) : const Color(0xFF728EAC),
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+            Container(
+              height: 36,
+              width: 36,
+              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+              child: const Icon(Icons.calendar_month_outlined, size: 18, color: Color(0xFF9AA1B4)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddressPredictions() {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.grey.shade100)),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: _placePredictions.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final prediction = _placePredictions[index];
+          return ListTile(
+            dense: true,
+            title: Text(prediction.mainText, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(prediction.secondaryText),
+            onTap: () {
+              FocusScope.of(context).unfocus();
+              _getPlaceDetails(prediction.placeId);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildImagesSection() {
+    return Row(
+      children: [
+        // Add Image Button
+        Expanded(
+          child: InkWell(
+            onTap: _pickImage,
+            child: _buildInputContainer(
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_photo_alternate_outlined, size: 30, color: Color(0xFF9AA1B4)),
+                  SizedBox(height: 12),
+                  Text('Add image', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2F3A50))),
+                  SizedBox(height: 4),
+                  Text('Max 3', style: TextStyle(fontSize: 11, color: Color(0xFF9AA1B4))),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        
+        // Image Preview
+        Expanded(
+          child: Container(
+            height: 120,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F5FA),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: _selectedImages.isEmpty 
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                        child: const Text('Site photo', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF9AA1B4))),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text('No images', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF9AA1B4))),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(8),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _selectedImages.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    return Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            File(_selectedImages[index].path), 
+                            width: 100, 
+                            height: 100, 
+                            fit: BoxFit.cover
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(index),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                              child: const Icon(Icons.close, size: 14, color: Colors.red),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomBar() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: TextButton(
+              onPressed: () {}, // TODO: Save Draft
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text('Save Draft', style: TextStyle(color: Color(0xFF2F3A50), fontWeight: FontWeight.bold, fontSize: 13)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2182F3),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Create Requirement', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  SizedBox(width: 12),
+                  Icon(Icons.arrow_forward, size: 18),
                 ],
               ),
             ),
@@ -950,3 +1185,4 @@ class WorkType {
     );
   }
 }
+

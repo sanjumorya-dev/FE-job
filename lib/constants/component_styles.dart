@@ -5,20 +5,20 @@ import 'colors.dart';
 class AppComponentStyles {
   // Card Style
   static BoxDecoration cardDecoration = BoxDecoration(
-    color: AppColors.surface,
+    color: AppColors.surfaceSecondary,
     borderRadius: BorderRadius.circular(12),
     border: Border.all(color: AppColors.borderLight),
-    boxShadow: [
+    boxShadow: const [
       BoxShadow(
         color: AppColors.shadowColor,
         blurRadius: 4,
-        offset: const Offset(0, 2),
+        offset: Offset(0, 2),
       ),
     ],
   );
 
   static BoxDecoration cardDecorationNoShadow = BoxDecoration(
-    color: AppColors.surface,
+    color: AppColors.surfaceSecondary,
     borderRadius: BorderRadius.circular(12),
     border: Border.all(color: AppColors.borderLight),
   );
@@ -26,36 +26,36 @@ class AppComponentStyles {
   // Button Styles
   static BoxDecoration primaryButtonStyle = BoxDecoration(
     color: AppColors.primary,
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(24),
   );
 
   static BoxDecoration outlineButtonStyle = BoxDecoration(
     border: Border.all(color: AppColors.primary, width: 1.5),
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(24),
     color: Colors.transparent,
   );
 
   static BoxDecoration successButtonStyle = BoxDecoration(
     color: AppColors.success,
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(24),
   );
 
   static BoxDecoration errorButtonStyle = BoxDecoration(
     color: AppColors.error,
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(24),
   );
 
   // Input Field Style
   static BoxDecoration inputFieldStyle = BoxDecoration(
-    color: Colors.white,
+    color: AppColors.surfaceSecondary,
     border: Border.all(color: AppColors.borderLight),
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(24),
   );
 
   static BoxDecoration inputFieldFocusedStyle = BoxDecoration(
-    color: Colors.white,
-    border: Border.all(color: AppColors.primary, width: 2),
-    borderRadius: BorderRadius.circular(8),
+    color: AppColors.surfaceSecondary,
+    border: Border.all(color: AppColors.primary, width: 1.5),
+    borderRadius: BorderRadius.circular(24),
   );
 
   // Badge Styles
@@ -93,7 +93,7 @@ class AppComponentStyles {
   );
 
   // Tab Bar Style
-  static BoxDecoration tabBarStyle = BoxDecoration(
+  static BoxDecoration tabBarStyle = const BoxDecoration(
     border: Border(
       bottom: BorderSide(color: AppColors.divider),
     ),
