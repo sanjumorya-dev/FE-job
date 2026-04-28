@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../data/models/requirement_model.dart';
 import '../data/models/applicant_model.dart';
 import '../data/services/requirement_service.dart';
+import '../data/services/dashboard_service.dart';
 
 class OwnerViewModel extends ChangeNotifier {
   final RequirementService _apiService = RequirementService();
+  final DashboardService _dashboardService = DashboardService();
   List<Requirement> _myRequirements = [];
   List<Applicant> _applicants = []; // Added this line
   bool _isLoading = false;
@@ -25,15 +27,19 @@ class OwnerViewModel extends ChangeNotifier {
   Map<String, String> get stats => _stats;
 
   Future<void> fetchDashboardStats() async {
-    // Mock stats for dashboard
-    await Future.delayed(const Duration(milliseconds: 300));
-    _stats = {
-      'activeReq': '12', 
-      'totalApplicants': '48',
-      'hiredLabour': '5',
-      'completedJobs': '24',
-    };
-    notifyListeners();
+    try {
+      final stats = await _dashboardService.getOwnerDashboardStats();
+      _stats = {
+        'activeReq': stats.activeRequirements.toString(),
+        'totalApplicants': stats.totalApplicants.toString(),
+        'hiredLabour': stats.hiredWorkers.toString(),
+        'completedJobs': stats.completedJobs.toString(),
+      };
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
   }
 
   Future<void> fetchMyRequirements() async {
@@ -71,13 +77,32 @@ class OwnerViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateRequirement(String id, CreateRequirementRequest request) async {
+  Future<bool> updateRequirement(
+      String id, CreateRequirementRequest request) async {
     _isLoading = true;
     notifyListeners();
 
     try {
       await _apiService.updateRequirement(id, request);
       await fetchMyRequirements(); // Refresh list
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteRequirement(String id) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _apiService.deleteRequirement(id);
+      _myRequirements.removeWhere((requirement) => requirement.id == id);
       _isLoading = false;
       notifyListeners();
       return true;
@@ -96,9 +121,7 @@ class OwnerViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Mock data for applicants
-      await Future.delayed(const Duration(milliseconds: 500));
-      _applicants = _generateMockApplicants(requirementId);
+      _applicants = await _apiService.getApplicants(requirementId);
       _isLoading = false;
     } catch (e) {
       _error = e.toString();
@@ -108,38 +131,33 @@ class OwnerViewModel extends ChangeNotifier {
   }
 
   Future<void> acceptApplicant(String requirementId, String applicantId) async {
-    // Mock accept logic
-    await Future.delayed(const Duration(milliseconds: 300));
-    final index = _applicants.indexWhere((a) => a.id == applicantId);
-    if (index != -1) {
-      _applicants[index] = _applicants[index].copyWith(status: ApplicationStatus.accepted);
+    try {
+      await _apiService.acceptApplicant(requirementId, applicantId);
+      final index = _applicants.indexWhere((a) => a.id == applicantId);
+      if (index != -1) {
+        _applicants[index] =
+            _applicants[index].copyWith(status: ApplicationStatus.accepted);
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = e.toString();
       notifyListeners();
     }
   }
 
   Future<void> rejectApplicant(String requirementId, String applicantId) async {
-    // Mock reject logic
-    await Future.delayed(const Duration(milliseconds: 300));
-    final index = _applicants.indexWhere((a) => a.id == applicantId);
-    if (index != -1) {
-      _applicants[index] = _applicants[index].copyWith(status: ApplicationStatus.rejected);
+    try {
+      await _apiService.rejectApplicant(requirementId, applicantId);
+      final index = _applicants.indexWhere((a) => a.id == applicantId);
+      if (index != -1) {
+        _applicants[index] =
+            _applicants[index].copyWith(status: ApplicationStatus.rejected);
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = e.toString();
       notifyListeners();
     }
-  }
-
-  List<Applicant> _generateMockApplicants(String requirementId) {
-    return [
-      Applicant(
-        id: '1', userId: 'user-1', requirementId: requirementId, workerName: 'Rahul Kumar',
-        gender: 'Male', experienceYears: 5, mobileNumber: '+91 98765 43210',
-        status: ApplicationStatus.pending, appliedDate: DateTime.now(),
-      ),
-      Applicant(
-        id: '2', userId: 'user-2', requirementId: requirementId, workerName: 'Priya Singh',
-        gender: 'Female', experienceYears: 3, mobileNumber: '+91 98765 43211',
-        status: ApplicationStatus.pending, appliedDate: DateTime.now(),
-      ),
-    ];
   }
 }
 

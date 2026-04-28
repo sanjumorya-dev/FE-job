@@ -6,14 +6,16 @@ class AuthService {
   final SecureHttpClient _client = SecureHttpClient();
 
   /// Login with mobile number and password
+  ///
+  /// API: POST /Auth/Login
   Future<User> login(String mobileNumber, String password, {String? countryCode}) async {
     try {
       final response = await _client.post(
-        '/Auth/login',
+        '/Auth/Login',
         body: {
-          'MobileNumber': mobileNumber,
-          'CountryCode': countryCode ?? '+91',
-          'Password': password,
+          'mobileNumber': mobileNumber,
+          'countryCode': countryCode ?? '+91',
+          'password': password,
         },
       );
 
@@ -58,6 +60,8 @@ class AuthService {
   }
 
   /// Register new user
+  ///
+  /// API: POST /User/create
   Future<Map<String, dynamic>> register(CreateUserRequest request) async {
     try {
       final response = await _client.post(
@@ -74,13 +78,16 @@ class AuthService {
   }
 
   /// Send OTP to mobile number
-  Future<bool> sendOtp(String mobileNumber, {String? countryCode}) async {
+  ///
+  /// API: POST /Auth/OTPRequest
+  Future<bool> sendOtp(String mobileNumber, {String? email, String? countryCode}) async {
     try {
       final response = await _client.post(
-        '/Auth/otpRequest',
+        '/Auth/OTPRequest',
         body: {
-          'MobileNumber': mobileNumber,
-          'CountryCode': countryCode ?? '+91',
+          if (email != null && email.isNotEmpty) 'email': email,
+          'mobileNumber': mobileNumber,
+          'countryCode': countryCode ?? '+91',
         },
       );
       return response.statusCode == 200;
@@ -91,15 +98,19 @@ class AuthService {
   }
 
   /// Verify OTP and return token
-  Future<String?> verifyOtp(String mobileNumber, String otp, {String? countryCode}) async {
+  ///
+  /// API: POST /Auth/OTPVerify
+  /// OtpType: 0 = Login, 1 = Registration, 2 = Password Reset
+  Future<String?> verifyOtp(String mobileNumber, String otp, {String? email, String? countryCode, int otpType = 0}) async {
     try {
       final response = await _client.post(
-        '/Auth/otpVerify',
+        '/Auth/OTPVerify',
         body: {
-          'MobileNumber': mobileNumber,
-          'CountryCode': countryCode ?? '+91',
-          'OtpCode': otp,
-          'OtpType': 0,
+          if (email != null && email.isNotEmpty) 'email': email,
+          'mobileNumber': mobileNumber,
+          'countryCode': countryCode ?? '+91',
+          'otpCode': int.tryParse(otp) ?? otp,
+          'otpType': otpType,
         },
       );
 
@@ -124,10 +135,12 @@ class AuthService {
   }
 
   /// Reset password with token
+  ///
+  /// API: POST /Auth/ResetPassword
   Future<bool> resetPassword(String token, String newPassword) async {
     try {
       final response = await _client.post(
-        '/Auth/resetPassword',
+        '/Auth/ResetPassword',
         body: {
           'token': token,
           'newPassword': newPassword,

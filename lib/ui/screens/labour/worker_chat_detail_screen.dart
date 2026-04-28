@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:dihaadi_app/constants/colors.dart';
-import 'package:dihaadi_app/ui/screens/labour/worker_chat_list_screen.dart';
+import 'package:dihaadi_app/data/models/chat_model.dart' as chat;
+import 'package:dihaadi_app/data/services/chat_service.dart';
 import 'package:dihaadi_app/ui/screens/labour/worker_rate_owner_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
 
 class WorkerChatDetailScreen extends StatefulWidget {
-  final WorkerChatConversation conversation;
+  final chat.ChatConversation conversation;
 
   const WorkerChatDetailScreen({
     super.key,
@@ -18,32 +21,12 @@ class WorkerChatDetailScreen extends StatefulWidget {
 class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ChatService _chatService = ChatService();
 
-  final List<WorkerChatMessage> _messages = [
-    WorkerChatMessage(
-      id: '1',
-      text: 'Hi, your application has been accepted!',
-      isSentByMe: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      status: WorkerMessageStatus.read,
-    ),
-    WorkerChatMessage(
-      id: '2',
-      text: 'Thank you! When should I start?',
-      isSentByMe: true,
-      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-      status: WorkerMessageStatus.read,
-    ),
-    WorkerChatMessage(
-      id: '3',
-      text: 'Please reach the site by 10 AM tomorrow',
-      isSentByMe: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-      status: WorkerMessageStatus.read,
-    ),
-  ];
+  List<chat.ChatMessage> _messages = [];
 
   bool _isJobCompleted = false;
+  bool _isLoading = true;
 
   @override
   void dispose() {
@@ -52,23 +35,51 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  @override
+  void initState() {
+    super.initState();
+    _fetchMessages();
+  }
+
+  Future<void> _fetchMessages() async {
+    setState(() => _isLoading = true);
+    try {
+      final messages = await _chatService.getMessages(
+        conversationId: widget.conversation.id,
+      );
+      if (!mounted) return;
+      setState(() => _messages = messages);
+      _scrollToBottom();
+    } catch (_) {
+      // Keep the compose box available even if history fails.
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
 
-    final newMessage = WorkerChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: _messageController.text.trim(),
-      isSentByMe: true,
-      timestamp: DateTime.now(),
-      status: WorkerMessageStatus.sent,
-    );
-
-    setState(() {
-      _messages.add(newMessage);
-    });
+    final text = _messageController.text.trim();
 
     _messageController.clear();
+    try {
+      final sent = await _chatService.sendMessage(
+        conversationId: widget.conversation.id,
+        text: text,
+      );
+      if (!mounted) return;
+      setState(() => _messages.add(sent));
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Message failed: $e')),
+      );
+    }
+  }
 
+  void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -132,8 +143,10 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => WorkerRateOwnerScreen(
-              ownerName: widget.conversation.ownerName,
+              ownerName: widget.conversation.participantName,
               jobTitle: widget.conversation.jobTitle,
+              ownerId: widget.conversation.participantId,
+              requirementId: widget.conversation.requirementId,
             ),
           ),
         );
@@ -183,7 +196,7 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.conversation.ownerName,
+                    widget.conversation.participantName,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -279,7 +292,9 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
 
           // Messages List
           Expanded(
-            child: ListView.builder(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               itemCount: _messages.length,
@@ -349,13 +364,14 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
 }
 
 class _WorkerMessageBubble extends StatelessWidget {
-  final WorkerChatMessage message;
+  final chat.ChatMessage message;
 
   const _WorkerMessageBubble({required this.message});
 
   @override
   Widget build(BuildContext context) {
-    final isMe = message.isSentByMe;
+    final currentUserId = context.read<AuthViewModel>().currentUser?.id;
+    final isMe = currentUserId != null && message.senderId == currentUserId;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -421,11 +437,11 @@ class _WorkerMessageBubble extends StatelessWidget {
                       if (isMe) ...[
                         const SizedBox(width: 4),
                         Icon(
-                          message.status == WorkerMessageStatus.read
+                          message.status.toLowerCase() == 'read'
                               ? Icons.done_all
                               : Icons.done,
                           size: 14,
-                          color: message.status == WorkerMessageStatus.read
+                          color: message.status.toLowerCase() == 'read'
                               ? Colors.blue
                               : Colors.white.withOpacity(0.7),
                         ),
@@ -450,20 +466,3 @@ class _WorkerMessageBubble extends StatelessWidget {
   }
 }
 
-class WorkerChatMessage {
-  final String id;
-  final String text;
-  final bool isSentByMe;
-  final DateTime timestamp;
-  final WorkerMessageStatus status;
-
-  WorkerChatMessage({
-    required this.id,
-    required this.text,
-    required this.isSentByMe,
-    required this.timestamp,
-    required this.status,
-  });
-}
-
-enum WorkerMessageStatus { sent, delivered, read }

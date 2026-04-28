@@ -2,26 +2,110 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:dihaadi_app/data/models/requirement_model.dart';
+import 'package:dihaadi_app/data/services/requirement_service.dart';
 import 'package:dihaadi_app/viewmodels/labour_viewmodel.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 
-class JobDetailsScreen extends StatelessWidget {
+class JobDetailsScreen extends StatefulWidget {
   final Requirement job;
   const JobDetailsScreen({super.key, required this.job});
 
   @override
+  State<JobDetailsScreen> createState() => _JobDetailsScreenState();
+}
+
+class _JobDetailsScreenState extends State<JobDetailsScreen> {
+  final RequirementService _requirementService = RequirementService();
+  Requirement? _detailJob;
+  bool _isLoading = true;
+  String? _error;
+
+  Requirement get _job => _detailJob ?? widget.job;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchJobDetails();
+  }
+
+  Future<void> _fetchJobDetails() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final detail = await _requirementService.getRequirementById(widget.job.id);
+      if (!mounted) return;
+      setState(() => _detailJob = detail);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final job = _job;
+    final workTypes =
+        job.workTypes.map((e) => e.name).where((e) => e.isNotEmpty).toList();
+    final locationParts = [
+      if ((job.address ?? '').isNotEmpty) job.address!,
+      if ((job.city ?? '').isNotEmpty) job.city!,
+      if ((job.state ?? '').isNotEmpty) job.state!,
+      if ((job.pincode ?? '').isNotEmpty) job.pincode!,
+      if ((job.country ?? '').isNotEmpty) job.country!,
+    ];
+    final fullLocation = locationParts.join(', ');
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Job Details'),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: _fetchJobDetails,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_isLoading)
+              const LinearProgressIndicator(minHeight: 2),
+            if (_error != null && _detailJob == null) ...[
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: .08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.error.withValues(alpha: .2),
+                  ),
+                ),
+                child: const Text(
+                  'Unable to load latest job details. Showing saved job info.',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
+            if (job.images.isNotEmpty) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  job.images.first,
+                  width: double.infinity,
+                  height: 180,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             // Job Title Card
             Container(
               width: double.infinity,
@@ -51,6 +135,21 @@ class JobDetailsScreen extends StatelessWidget {
                       height: 1.5,
                     ),
                   ),
+                  if (workTypes.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: workTypes
+                          .map(
+                            (name) => Chip(
+                              label: Text(name),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -65,7 +164,7 @@ class JobDetailsScreen extends StatelessWidget {
                     icon: Icons.currency_rupee_rounded,
                     title: 'Salary',
                     value: job.salary != null
-                        ? '₹${job.salary!.toStringAsFixed(0)}/day'
+                        ? 'Rs ${job.salary!.toStringAsFixed(0)}${_salarySuffix(job.salaryPeriod)}'
                         : 'Negotiable',
                     color: AppColors.success,
                   ),
@@ -85,7 +184,7 @@ class JobDetailsScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Location Card
-            if (job.address != null)
+            if (fullLocation.isNotEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -113,7 +212,7 @@ class JobDetailsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      job.address!,
+                      fullLocation,
                       style: const TextStyle(
                         fontSize: 14,
                         color: AppColors.textMain,
@@ -156,6 +255,24 @@ class JobDetailsScreen extends StatelessWidget {
                       Icons.people_outline,
                       'Total Workers',
                       '${job.personNeed}',
+                    ),
+                  if (job.maleCount > 0)
+                    _buildInfoRow(
+                      Icons.male,
+                      'Male Workers',
+                      '${job.maleCount}',
+                    ),
+                  if (job.femaleCount > 0)
+                    _buildInfoRow(
+                      Icons.female,
+                      'Female Workers',
+                      '${job.femaleCount}',
+                    ),
+                  if (job.date != null)
+                    _buildInfoRow(
+                      Icons.calendar_today_outlined,
+                      'Posted Date',
+                      DateFormat('dd MMM yyyy').format(job.date!.toLocal()),
                     ),
                 ],
               ),
@@ -206,7 +323,18 @@ class JobDetailsScreen extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
+  }
+
+  String _salarySuffix(String? salaryPeriod) {
+    if (salaryPeriod == null || salaryPeriod.isEmpty) return '/day';
+    final value = salaryPeriod.toLowerCase();
+    if (value.startsWith('/')) return salaryPeriod;
+    if (value == 'daily' || value == 'day') return '/day';
+    if (value == 'weekly' || value == 'week') return '/week';
+    if (value == 'monthly' || value == 'month') return '/month';
+    return '/$salaryPeriod';
   }
 
   Widget _buildDetailCard({
