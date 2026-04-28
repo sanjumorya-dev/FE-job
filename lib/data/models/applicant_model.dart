@@ -10,6 +10,7 @@ class Applicant {
   final String mobileNumber;
   final ApplicationStatus status;
   final DateTime appliedDate;
+  final List<String> workTypes;
 
   Applicant({
     required this.id,
@@ -21,6 +22,7 @@ class Applicant {
     required this.mobileNumber,
     required this.status,
     required this.appliedDate,
+    this.workTypes = const [],
   });
 
   Applicant copyWith({
@@ -33,6 +35,7 @@ class Applicant {
     String? mobileNumber,
     ApplicationStatus? status,
     DateTime? appliedDate,
+    List<String>? workTypes,
   }) {
     return Applicant(
       id: id ?? this.id,
@@ -44,6 +47,7 @@ class Applicant {
       mobileNumber: mobileNumber ?? this.mobileNumber,
       status: status ?? this.status,
       appliedDate: appliedDate ?? this.appliedDate,
+      workTypes: workTypes ?? this.workTypes,
     );
   }
 }

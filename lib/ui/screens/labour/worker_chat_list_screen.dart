@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dihaadi_app/constants/colors.dart';
+import 'package:dihaadi_app/data/models/chat_model.dart';
+import 'package:dihaadi_app/data/services/chat_service.dart';
 import 'package:dihaadi_app/ui/screens/labour/worker_chat_detail_screen.dart';
 
 class WorkerChatListScreen extends StatefulWidget {
@@ -10,38 +12,33 @@ class WorkerChatListScreen extends StatefulWidget {
 }
 
 class _WorkerChatListScreenState extends State<WorkerChatListScreen> {
-  final List<WorkerChatConversation> _conversations = [
-    WorkerChatConversation(
-      id: '1',
-      ownerName: 'Rajesh Kumar',
-      ownerImage: null,
-      jobTitle: 'Electrician Needed',
-      lastMessage: 'Please reach the site by 10 AM tomorrow',
-      lastMessageTime: DateTime.now().subtract(const Duration(minutes: 30)),
-      unreadCount: 1,
-      isOnline: true,
-    ),
-    WorkerChatConversation(
-      id: '2',
-      ownerName: 'Priya Sharma',
-      ownerImage: null,
-      jobTitle: 'Plumbing Work',
-      lastMessage: 'Great work! Payment sent',
-      lastMessageTime: DateTime.now().subtract(const Duration(hours: 3)),
-      unreadCount: 0,
-      isOnline: false,
-    ),
-    WorkerChatConversation(
-      id: '3',
-      ownerName: 'Amit Patel',
-      ownerImage: null,
-      jobTitle: 'Painting Work',
-      lastMessage: 'Can you start from Monday?',
-      lastMessageTime: DateTime.now().subtract(const Duration(days: 1)),
-      unreadCount: 0,
-      isOnline: true,
-    ),
-  ];
+  final ChatService _chatService = ChatService();
+  List<ChatConversation> _conversations = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchConversations();
+  }
+
+  Future<void> _fetchConversations() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final conversations = await _chatService.getConversations();
+      if (!mounted) return;
+      setState(() => _conversations = conversations);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,9 +59,36 @@ class _WorkerChatListScreenState extends State<WorkerChatListScreen> {
           ),
         ],
       ),
-      body: _conversations.isEmpty
-          ? const _WorkerEmptyChatState()
-          : ListView.builder(
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading && _conversations.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null && _conversations.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _fetchConversations,
+        child: ListView(
+          children: const [
+            SizedBox(height: 180),
+            Center(child: Text('Unable to load conversations')),
+          ],
+        ),
+      );
+    }
+    if (_conversations.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _fetchConversations,
+        child: ListView(
+          children: const [SizedBox(height: 180), _WorkerEmptyChatState()],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _fetchConversations,
+      child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: _conversations.length,
               itemBuilder: (context, index) {
@@ -89,7 +113,7 @@ class _WorkerChatListScreenState extends State<WorkerChatListScreen> {
 }
 
 class _WorkerChatListItem extends StatelessWidget {
-  final WorkerChatConversation conversation;
+  final ChatConversation conversation;
   final VoidCallback onTap;
 
   const _WorkerChatListItem({
@@ -138,7 +162,7 @@ class _WorkerChatListItem extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          conversation.ownerName,
+                          conversation.participantName,
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
@@ -279,7 +303,7 @@ class _WorkerEmptyChatState extends StatelessWidget {
 }
 
 class _WorkerChatSearchDelegate extends SearchDelegate<String> {
-  final List<WorkerChatConversation> conversations;
+  final List<ChatConversation> conversations;
 
   _WorkerChatSearchDelegate(this.conversations);
 
@@ -318,7 +342,7 @@ class _WorkerChatSearchDelegate extends SearchDelegate<String> {
   Widget _buildSearchResults() {
     final filtered = conversations
         .where((c) =>
-            c.ownerName.toLowerCase().contains(query.toLowerCase()) ||
+            c.participantName.toLowerCase().contains(query.toLowerCase()) ||
             c.jobTitle.toLowerCase().contains(query.toLowerCase()))
         .toList();
 
@@ -330,10 +354,10 @@ class _WorkerChatSearchDelegate extends SearchDelegate<String> {
           leading: const CircleAvatar(
             child: Icon(Icons.person),
           ),
-          title: Text(conversation.ownerName),
+          title: Text(conversation.participantName),
           subtitle: Text(conversation.jobTitle),
           onTap: () {
-            query = conversation.ownerName;
+            query = conversation.participantName;
           },
         );
       },
@@ -341,24 +365,3 @@ class _WorkerChatSearchDelegate extends SearchDelegate<String> {
   }
 }
 
-class WorkerChatConversation {
-  final String id;
-  final String ownerName;
-  final String? ownerImage;
-  final String jobTitle;
-  final String lastMessage;
-  final DateTime lastMessageTime;
-  final int unreadCount;
-  final bool isOnline;
-
-  WorkerChatConversation({
-    required this.id,
-    required this.ownerName,
-    this.ownerImage,
-    required this.jobTitle,
-    required this.lastMessage,
-    required this.lastMessageTime,
-    required this.unreadCount,
-    required this.isOnline,
-  });
-}

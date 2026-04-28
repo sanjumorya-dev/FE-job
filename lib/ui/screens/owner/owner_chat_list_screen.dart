@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dihaadi_app/constants/colors.dart';
+import 'package:dihaadi_app/data/models/chat_model.dart';
+import 'package:dihaadi_app/data/services/chat_service.dart';
 import 'package:dihaadi_app/ui/screens/owner/owner_chat_detail_screen.dart';
 
 class OwnerChatListScreen extends StatefulWidget {
@@ -10,38 +12,33 @@ class OwnerChatListScreen extends StatefulWidget {
 }
 
 class _OwnerChatListScreenState extends State<OwnerChatListScreen> {
-  final List<ChatConversation> _conversations = [
-    ChatConversation(
-      id: '1',
-      workerName: 'Rahul Kumar',
-      workerImage: null,
-      jobTitle: 'Electrician Needed',
-      lastMessage: 'I will reach the site by 10 AM',
-      lastMessageTime: DateTime.now().subtract(const Duration(minutes: 15)),
-      unreadCount: 2,
-      isOnline: true,
-    ),
-    ChatConversation(
-      id: '2',
-      workerName: 'Priya Singh',
-      workerImage: null,
-      jobTitle: 'Plumbing Work',
-      lastMessage: 'Task completed successfully',
-      lastMessageTime: DateTime.now().subtract(const Duration(hours: 2)),
-      unreadCount: 0,
-      isOnline: false,
-    ),
-    ChatConversation(
-      id: '3',
-      workerName: 'Amit Sharma',
-      workerImage: null,
-      jobTitle: 'Painting Work',
-      lastMessage: 'Sure, I can start from Monday',
-      lastMessageTime: DateTime.now().subtract(const Duration(days: 1)),
-      unreadCount: 1,
-      isOnline: true,
-    ),
-  ];
+  final ChatService _chatService = ChatService();
+  List<ChatConversation> _conversations = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchConversations();
+  }
+
+  Future<void> _fetchConversations() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final conversations = await _chatService.getConversations();
+      if (!mounted) return;
+      setState(() => _conversations = conversations);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,28 +59,55 @@ class _OwnerChatListScreenState extends State<OwnerChatListScreen> {
           ),
         ],
       ),
-      body: _conversations.isEmpty
-          ? const _EmptyChatState()
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: _conversations.length,
-              itemBuilder: (context, index) {
-                final conversation = _conversations[index];
-                return _ChatListItem(
-                  conversation: conversation,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => OwnerChatDetailScreen(
-                          conversation: conversation,
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading && _conversations.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null && _conversations.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _fetchConversations,
+        child: ListView(
+          children: const [
+            SizedBox(height: 180),
+            Center(child: Text('Unable to load conversations')),
+          ],
+        ),
+      );
+    }
+    if (_conversations.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _fetchConversations,
+        child: ListView(
+          children: const [SizedBox(height: 180), _EmptyChatState()],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _fetchConversations,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: _conversations.length,
+        itemBuilder: (context, index) {
+          final conversation = _conversations[index];
+          return _ChatListItem(
+            conversation: conversation,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OwnerChatDetailScreen(
+                    conversation: conversation,
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
@@ -137,7 +161,7 @@ class _ChatListItem extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          conversation.workerName,
+                          conversation.participantName,
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
@@ -316,7 +340,7 @@ class _ChatSearchDelegate extends SearchDelegate<String> {
   Widget _buildSearchResults() {
     final filtered = conversations
         .where((c) =>
-            c.workerName.toLowerCase().contains(query.toLowerCase()) ||
+            c.participantName.toLowerCase().contains(query.toLowerCase()) ||
             c.jobTitle.toLowerCase().contains(query.toLowerCase()))
         .toList();
 
@@ -328,10 +352,10 @@ class _ChatSearchDelegate extends SearchDelegate<String> {
           leading: const CircleAvatar(
             child: Icon(Icons.person),
           ),
-          title: Text(conversation.workerName),
+          title: Text(conversation.participantName),
           subtitle: Text(conversation.jobTitle),
           onTap: () {
-            query = conversation.workerName;
+            query = conversation.participantName;
           },
         );
       },
@@ -339,24 +363,3 @@ class _ChatSearchDelegate extends SearchDelegate<String> {
   }
 }
 
-class ChatConversation {
-  final String id;
-  final String workerName;
-  final String? workerImage;
-  final String jobTitle;
-  final String lastMessage;
-  final DateTime lastMessageTime;
-  final int unreadCount;
-  final bool isOnline;
-
-  ChatConversation({
-    required this.id,
-    required this.workerName,
-    this.workerImage,
-    required this.jobTitle,
-    required this.lastMessage,
-    required this.lastMessageTime,
-    required this.unreadCount,
-    required this.isOnline,
-  });
-}

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 import 'package:dihaadi_app/data/models/applicant_model.dart';
+import 'package:dihaadi_app/data/models/chat_model.dart';
+import 'package:dihaadi_app/data/models/requirement_model.dart';
+import 'package:dihaadi_app/data/services/requirement_service.dart';
 import 'package:dihaadi_app/ui/screens/owner/owner_chat_detail_screen.dart';
-import 'package:dihaadi_app/ui/screens/owner/owner_chat_list_screen.dart';
 import 'package:dihaadi_app/viewmodels/owner_viewmodel.dart';
 import 'package:provider/provider.dart';
 
-class ApplicantProfileScreen extends StatelessWidget {
+class ApplicantProfileScreen extends StatefulWidget {
   final Applicant applicant;
   final String requirementId;
   final String jobTitle;
@@ -17,6 +19,56 @@ class ApplicantProfileScreen extends StatelessWidget {
     required this.requirementId,
     required this.jobTitle,
   });
+
+  @override
+  State<ApplicantProfileScreen> createState() => _ApplicantProfileScreenState();
+}
+
+class _ApplicantProfileScreenState extends State<ApplicantProfileScreen> {
+  final RequirementService _requirementService = RequirementService();
+  Requirement? _requirement;
+  bool _isRequirementLoading = false;
+
+  Applicant get applicant => widget.applicant;
+  String get requirementId => widget.requirementId;
+  String get jobTitle {
+    final fetchedTitle = _requirement?.title.trim();
+    if (fetchedTitle != null && fetchedTitle.isNotEmpty) return fetchedTitle;
+    return widget.jobTitle;
+  }
+
+  List<String> get _skillLabels {
+    final names = _requirement?.workTypes
+            .map((workType) => workType.name.trim())
+            .where((name) => name.isNotEmpty)
+            .toList() ??
+        const <String>[];
+
+    if (names.isNotEmpty) return names;
+    return applicant.workTypes.where((workType) => workType.trim().isNotEmpty).toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRequirement();
+  }
+
+  Future<void> _fetchRequirement() async {
+    if (requirementId.trim().isEmpty) return;
+
+    setState(() => _isRequirementLoading = true);
+    try {
+      final requirement =
+          await _requirementService.getRequirementById(requirementId);
+      if (!mounted) return;
+      setState(() => _requirement = requirement);
+    } catch (_) {
+      // Keep showing the applicant and passed job title if details fail.
+    } finally {
+      if (mounted) setState(() => _isRequirementLoading = false);
+    }
+  }
 
   void _makeCall(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -30,9 +82,11 @@ class ApplicantProfileScreen extends StatelessWidget {
   void _openChat(BuildContext context) {
     final conversation = ChatConversation(
       id: '${applicant.id}_$requirementId',
-      workerName: applicant.workerName,
-      workerImage: null,
+      participantId: applicant.id,
+      participantName: applicant.workerName,
+      participantImage: null,
       jobTitle: jobTitle,
+      requirementId: requirementId,
       lastMessage: 'Start of conversation',
       lastMessageTime: DateTime.now(),
       unreadCount: 0,
@@ -50,16 +104,41 @@ class ApplicantProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAccepted = applicant.status == ApplicationStatus.accepted;
+    final isPending = applicant.status == ApplicationStatus.pending;
+    final skillLabels = _skillLabels;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Applicant Profile'),
+        backgroundColor: AppColors.background,
+        elevation: 0,
         centerTitle: true,
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 20),
+          child: _TopIconButton(
+            icon: Icons.arrow_back_ios_new_rounded,
+            onTap: () => Navigator.pop(context),
+          ),
+        ),
+        title: const Text(
+          'Applicant Details',
+          style: TextStyle(
+            color: Color(0xFF151924),
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         actions: [
-          if (isAccepted)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
+          Padding(
+            padding: const EdgeInsets.only(right: 20),
+            child: PopupMenuButton<String>(
+              offset: const Offset(0, 42),
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              icon: const _TopIconButton(icon: Icons.more_horiz_rounded),
               onSelected: (value) {
                 if (value == 'chat') {
                   _openChat(context);
@@ -67,302 +146,266 @@ class ApplicantProfileScreen extends StatelessWidget {
                   _makeCall(context);
                 }
               },
-              itemBuilder: (context) => const [
-                PopupMenuItem(
-                  value: 'chat',
-                  child: Row(
-                    children: [
-                      Icon(Icons.chat),
-                      SizedBox(width: 8),
-                      Text('Send Message'),
-                    ],
+              itemBuilder: (context) => [
+                if (isAccepted)
+                  const PopupMenuItem(
+                    value: 'chat',
+                    child: _MenuAction(icon: Icons.chat, label: 'Send Message'),
                   ),
-                ),
-                PopupMenuItem(
-                  value: 'call',
-                  child: Row(
-                    children: [
-                      Icon(Icons.phone),
-                      SizedBox(width: 8),
-                      Text('Make Call'),
-                    ],
+                if (isAccepted)
+                  const PopupMenuItem(
+                    value: 'call',
+                    child: _MenuAction(icon: Icons.phone, label: 'Make Call'),
                   ),
-                ),
+                if (!isAccepted)
+                  const PopupMenuItem(
+                    enabled: false,
+                    child: Text('No actions available'),
+                  ),
               ],
             ),
+          ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.borderLight),
+      bottomNavigationBar: isPending
+          ? SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                decoration: const BoxDecoration(
+                  color: AppColors.background,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x0F000000),
+                      blurRadius: 18,
+                      offset: Offset(0, -8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showRejectDialog(context),
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        label: const Text('Reject'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          side: BorderSide(
+                            color: AppColors.error.withValues(alpha: .28),
+                          ),
+                          backgroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showAcceptDialog(context),
+                        icon: const Icon(Icons.check_rounded, size: 18),
+                        label: const Text('Approve Request'),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: const Color(0xFF07090D),
+                          elevation: 0,
+                          minimumSize: const Size.fromHeight(50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                children: [
-                  const CircleAvatar(
-                    radius: 50,
-                    child: Icon(Icons.person, size: 60),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    applicant.workerName,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textMain,
+            )
+          : isAccepted
+              ? SafeArea(
+                  top: false,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                    color: AppColors.background,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _openChat(context),
+                            icon: const Icon(Icons.chat_bubble_outline),
+                            label: const Text('Message'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF07090D),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _makeCall(context),
+                            icon: const Icon(Icons.phone_outlined),
+                            label: const Text('Call'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF07090D),
+                              backgroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                )
+              : null,
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(20, 8, 20, isPending ? 18 : 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_isRequirementLoading)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 14),
+                  child: LinearProgressIndicator(minHeight: 2),
+                ),
+              Center(
+                child: Column(
+                  children: [
+                    _ApplicantAvatar(name: applicant.workerName),
+                    const SizedBox(height: 12),
+                    Text(
+                      applicant.workerName,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF151924),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(applicant.status).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      _getStatusText(applicant.status),
-                      style: TextStyle(
-                        color: _getStatusColor(applicant.status),
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(height: 4),
+                    Text(
+                      '${applicant.experienceYears} yrs experience',
+                      style: const TextStyle(
+                        color: Color(0xFF697386),
                         fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    _StatusPill(
+                      text: _getStatusText(applicant.status),
+                      color: _getStatusColor(applicant.status),
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Info Cards
-            _buildInfoCard(
-              title: 'Personal Information',
-              children: [
-                _buildInfoRow(Icons.badge_outlined, 'Gender', applicant.gender),
-                _buildInfoRow(Icons.cake_outlined, 'Experience',
-                    '${applicant.experienceYears} Years'),
-                _buildInfoRow(
-                    Icons.phone_outlined, 'Mobile', applicant.mobileNumber),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildInfoCard(
-              title: 'Application Details',
-              children: [
-                _buildInfoRow(
-                  Icons.calendar_today_outlined,
-                  'Applied Date',
-                  _formatDate(applicant.appliedDate),
-                ),
-                _buildInfoRow(
-                  Icons.work_outline,
-                  'Job Title',
-                  jobTitle,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildInfoCard(
-              title: 'Skills',
-              children: [
-                _buildSkillChip('Wiring'),
-                _buildSkillChip('Drilling'),
-                _buildSkillChip('Configuration'),
-                _buildSkillChip('Maintenance'),
-              ],
-            ),
-
-            const SizedBox(height: 32),
-
-            // Action Buttons
-            if (applicant.status == ApplicationStatus.pending) ...[
+              const SizedBox(height: 26),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _showRejectDialog(context),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.error),
-                        minimumSize: const Size.fromHeight(50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
-                      child: const Text(
-                        'Reject',
-                        style: TextStyle(
-                          color: AppColors.error,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    child: _MetricCard(
+                      label: 'Experience',
+                      value: '${applicant.experienceYears} yrs',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _showAcceptDialog(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.success,
-                        minimumSize: const Size.fromHeight(50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
-                      child: const Text(
-                        'Accept',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    child: _MetricCard(
+                      label: 'Availability',
+                      value: isAccepted ? 'Approved' : 'Immediate',
                     ),
                   ),
                 ],
               ),
-            ] else if (isAccepted) ...[
-              // Chat and Call buttons for accepted applicants
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _openChat(context),
-                      icon: const Icon(Icons.chat),
-                      label: const Text('Send Message'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        minimumSize: const Size.fromHeight(50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
-                    ),
+              const SizedBox(height: 24),
+              const _SectionTitle('Application Info'),
+              const SizedBox(height: 10),
+              _DetailLine(
+                icon: Icons.access_time_rounded,
+                iconColor: const Color(0xFF21B58E),
+                title: 'Applied ${_formatRelativeDate(applicant.appliedDate)}',
+                subtitle: 'Application received at ${_formatTime(applicant.appliedDate)} via Mobile App.',
+              ),
+              const SizedBox(height: 14),
+              _DetailLine(
+                icon: Icons.work_outline_rounded,
+                iconColor: AppColors.primary,
+                title: 'Applied For',
+                subtitle: jobTitle.isEmpty ? 'Job request' : jobTitle,
+              ),
+              const SizedBox(height: 24),
+              const _SectionTitle('Personal Info'),
+              const SizedBox(height: 10),
+              _DetailLine(
+                icon: Icons.person_outline_rounded,
+                iconColor: const Color(0xFF21B58E),
+                title: 'Gender',
+                subtitle: applicant.gender.isEmpty ? 'Not shared' : applicant.gender,
+              ),
+              const SizedBox(height: 14),
+              _DetailLine(
+                icon: Icons.phone_outlined,
+                iconColor: AppColors.primary,
+                title: 'Mobile Number',
+                subtitle: applicant.mobileNumber.isEmpty
+                    ? 'Not shared'
+                    : applicant.mobileNumber,
+              ),
+              const SizedBox(height: 24),
+              const _SectionTitle('Skills & Expertise'),
+              const SizedBox(height: 12),
+              if (skillLabels.isEmpty)
+                const Text(
+                  'No skills shared',
+                  style: TextStyle(
+                    color: Color(0xFF687386),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _makeCall(context),
-                      icon: const Icon(Icons.phone),
-                      label: const Text('Make Call'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.success,
-                        minimumSize: const Size.fromHeight(50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                )
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      skillLabels.map((workType) => _SkillChip(workType)).toList(),
+                ),
+              const SizedBox(height: 24),
+              const _SectionTitle('About Applicant'),
+              const SizedBox(height: 10),
+              Text(
+                _aboutApplicant,
+                style: const TextStyle(
+                  color: Color(0xFF475266),
+                  fontSize: 13,
+                  height: 1.58,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildInfoCard({
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textMain,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...children,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: AppColors.textSecondary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textMain,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSkillChip(String skill) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.primaryLight,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          skill,
-          style: const TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
-        ),
-      ),
-    );
+  String get _aboutApplicant {
+    final experience = applicant.experienceYears <= 0
+        ? 'practical'
+        : '${applicant.experienceYears} years of';
+    return 'Hardworking individual with $experience experience assisting teams on residential and commercial work. Punctual and ready for physical labour tasks.';
   }
 
   void _showAcceptDialog(BuildContext context) {
@@ -394,7 +437,7 @@ class ApplicantProfileScreen extends StatelessWidget {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
+              backgroundColor: const Color(0xFF07090D),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -448,7 +491,7 @@ class ApplicantProfileScreen extends StatelessWidget {
   Color _getStatusColor(ApplicationStatus status) {
     switch (status) {
       case ApplicationStatus.pending:
-        return AppColors.warning;
+        return const Color(0xFFE1A100);
       case ApplicationStatus.accepted:
         return AppColors.success;
       case ApplicationStatus.rejected:
@@ -459,15 +502,311 @@ class ApplicantProfileScreen extends StatelessWidget {
   String _getStatusText(ApplicationStatus status) {
     switch (status) {
       case ApplicationStatus.pending:
-        return 'Pending';
+        return 'Pending Review';
       case ApplicationStatus.accepted:
-        return 'Accepted';
+        return 'Approved';
       case ApplicationStatus.rejected:
         return 'Rejected';
     }
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  String _formatRelativeDate(DateTime date) {
+    final now = DateTime.now();
+    final localDate = DateTime(date.year, date.month, date.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final difference = today.difference(localDate).inDays;
+
+    if (difference == 0) return 'Today';
+    if (difference == 1) return 'Yesterday';
+    return 'on ${date.day}/${date.month}/${date.year}';
+  }
+
+  String _formatTime(DateTime date) {
+    final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
+    final minute = date.minute.toString().padLeft(2, '0');
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+}
+
+class _TopIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _TopIconButton({
+    required this.icon,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F3F6),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(icon, size: 17, color: const Color(0xFF202633)),
+    );
+
+    if (onTap == null) return child;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: child,
+    );
+  }
+}
+
+class _ApplicantAvatar extends StatelessWidget {
+  final String name;
+
+  const _ApplicantAvatar({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .map((part) => part[0].toUpperCase())
+        .join();
+
+    return Container(
+      width: 88,
+      height: 88,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .08),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Container(
+        width: 82,
+        height: 82,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFFF7F8FA),
+          border: Border.all(color: const Color(0xFFE5E8EE)),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          initials.isEmpty ? 'A' : initials,
+          style: const TextStyle(
+            color: Color(0xFF151924),
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String text;
+  final Color color;
+
+  const _StatusPill({
+    required this.text,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: .13),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _MetricCard({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 76,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFEFF1F5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF7A8394),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF151924),
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: const TextStyle(
+        color: Color(0xFF151924),
+        fontSize: 14,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+  }
+}
+
+class _DetailLine extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+
+  const _DetailLine({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: .11),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 15, color: iconColor),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Color(0xFF151924),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Color(0xFF687386),
+                  fontSize: 12,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SkillChip extends StatelessWidget {
+  final String label;
+
+  const _SkillChip(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF2F6),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFF586274),
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _MenuAction({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18),
+        const SizedBox(width: 10),
+        Text(label),
+      ],
+    );
   }
 }

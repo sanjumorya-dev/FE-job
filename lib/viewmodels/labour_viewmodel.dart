@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../data/models/requirement_model.dart';
 import '../data/services/requirement_service.dart';
+import '../data/services/dashboard_service.dart';
 
 class LabourViewModel extends ChangeNotifier {
   final RequirementService _apiService = RequirementService();
+  final DashboardService _dashboardService = DashboardService();
   List<Requirement> _availableJobs = [];
   bool _isLoading = false;
   String? _error;
@@ -32,17 +34,19 @@ class LabourViewModel extends ChangeNotifier {
   }
 
   Future<void> fetchDashboardStats() async {
-    // TODO: Implement real stats API when available.
-    // For now, we can mock or derive from other data if possible.
-    // Leaving as mock for now as requested in plan task "Add getLabourStats (mock or real)"
-    await Future.delayed(const Duration(milliseconds: 300));
-    _stats = {
-      'jobsApplied': _recentApplications.length.toString(), // Derived from actual applications
-      'approved': '0', // Placeholder
-      'ongoing': '0', // Placeholder
-      'earnings': '0', // Placeholder
-    };
-    notifyListeners();
+    try {
+      final stats = await _dashboardService.getWorkerDashboardStats();
+      _stats = {
+        'jobsApplied': stats.appliedJobs.toString(),
+        'approved': stats.acceptedJobs.toString(),
+        'ongoing': stats.completedJobs.toString(),
+        'earnings': stats.earnings.toStringAsFixed(0),
+      };
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
   }
 
   Future<void> fetchRecentApplications() async {
@@ -67,7 +71,7 @@ class LabourViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _availableJobs = await _apiService.getRequirements(status: 1); // Fetch Active jobs
+      _availableJobs = await _apiService.getLabourList();
       _isLoading = false;
     } catch (e) {
       _error = e.toString();

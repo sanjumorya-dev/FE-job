@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:dihaadi_app/constants/colors.dart';
-import 'package:dihaadi_app/ui/screens/owner/owner_chat_list_screen.dart';
+import 'package:dihaadi_app/data/models/chat_model.dart' as chat;
+import 'package:dihaadi_app/data/services/chat_service.dart';
 import 'package:dihaadi_app/ui/screens/owner/worker_rating_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
 
 class OwnerChatDetailScreen extends StatefulWidget {
-  final ChatConversation conversation;
+  final chat.ChatConversation conversation;
 
   const OwnerChatDetailScreen({
     super.key,
@@ -18,46 +21,12 @@ class OwnerChatDetailScreen extends StatefulWidget {
 class _OwnerChatDetailScreenState extends State<OwnerChatDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ChatService _chatService = ChatService();
   
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      id: '1',
-      text: 'Hi, I have been assigned to your job',
-      isSentByMe: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-      status: MessageStatus.read,
-    ),
-    ChatMessage(
-      id: '2',
-      text: 'Great! Can you confirm your availability?',
-      isSentByMe: true,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 25)),
-      status: MessageStatus.read,
-    ),
-    ChatMessage(
-      id: '3',
-      text: 'Yes, I am available tomorrow',
-      isSentByMe: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 20)),
-      status: MessageStatus.read,
-    ),
-    ChatMessage(
-      id: '4',
-      text: 'Perfect! Please reach the site by 10 AM',
-      isSentByMe: true,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 18)),
-      status: MessageStatus.read,
-    ),
-    ChatMessage(
-      id: '5',
-      text: 'I will reach the site by 10 AM',
-      isSentByMe: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-      status: MessageStatus.read,
-    ),
-  ];
+  List<chat.ChatMessage> _messages = [];
 
   bool _isJobCompleted = false;
+  bool _isLoading = true;
 
   @override
   void dispose() {
@@ -66,24 +35,51 @@ class _OwnerChatDetailScreenState extends State<OwnerChatDetailScreen> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  @override
+  void initState() {
+    super.initState();
+    _fetchMessages();
+  }
+
+  Future<void> _fetchMessages() async {
+    setState(() => _isLoading = true);
+    try {
+      final messages = await _chatService.getMessages(
+        conversationId: widget.conversation.id,
+      );
+      if (!mounted) return;
+      setState(() => _messages = messages);
+      _scrollToBottom();
+    } catch (_) {
+      // The empty state remains usable so users can still try sending.
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
 
-    final newMessage = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: _messageController.text.trim(),
-      isSentByMe: true,
-      timestamp: DateTime.now(),
-      status: MessageStatus.sent,
-    );
-
-    setState(() {
-      _messages.add(newMessage);
-    });
-
+    final text = _messageController.text.trim();
     _messageController.clear();
-    
-    // Scroll to bottom
+
+    try {
+      final sent = await _chatService.sendMessage(
+        conversationId: widget.conversation.id,
+        text: text,
+      );
+      if (!mounted) return;
+      setState(() => _messages.add(sent));
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Message failed: $e')),
+      );
+    }
+  }
+
+  void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -148,8 +144,10 @@ class _OwnerChatDetailScreenState extends State<OwnerChatDetailScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => WorkerRatingScreen(
-              workerName: widget.conversation.workerName,
+              workerName: widget.conversation.participantName,
               jobTitle: widget.conversation.jobTitle,
+              workerId: widget.conversation.participantId,
+              requirementId: widget.conversation.requirementId,
             ),
           ),
         );
@@ -199,7 +197,7 @@ class _OwnerChatDetailScreenState extends State<OwnerChatDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.conversation.workerName,
+                    widget.conversation.participantName,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -293,7 +291,9 @@ class _OwnerChatDetailScreenState extends State<OwnerChatDetailScreen> {
 
           // Messages List
           Expanded(
-            child: ListView.builder(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               itemCount: _messages.length,
@@ -363,21 +363,22 @@ class _OwnerChatDetailScreenState extends State<OwnerChatDetailScreen> {
 }
 
 class _MessageBubble extends StatelessWidget {
-  final ChatMessage message;
+  final chat.ChatMessage message;
 
   const _MessageBubble({required this.message});
 
   @override
   Widget build(BuildContext context) {
-    final isMe = message.isSentByMe;
+    final currentUserId = context.read<AuthViewModel>().currentUser?.id;
+    final sentByMe = currentUserId != null && message.senderId == currentUserId;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment:
-            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+            sentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          if (!isMe) ...[
+          if (!sentByMe) ...[
             const CircleAvatar(
               radius: 16,
               child: Icon(Icons.person, size: 16),
@@ -394,12 +395,12 @@ class _MessageBubble extends StatelessWidget {
                 vertical: 10,
               ),
               decoration: BoxDecoration(
-                color: isMe ? AppColors.primary : Colors.white,
+                color: sentByMe ? AppColors.primary : Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isMe ? 16 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 16),
+                  bottomLeft: Radius.circular(sentByMe ? 16 : 4),
+                  bottomRight: Radius.circular(sentByMe ? 4 : 16),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -415,7 +416,7 @@ class _MessageBubble extends StatelessWidget {
                   Text(
                     message.text,
                     style: TextStyle(
-                      color: isMe ? Colors.white : AppColors.textMain,
+                      color: sentByMe ? Colors.white : AppColors.textMain,
                       fontSize: 14,
                     ),
                   ),
@@ -427,17 +428,17 @@ class _MessageBubble extends StatelessWidget {
                         _formatMessageTime(message.timestamp),
                         style: TextStyle(
                           fontSize: 10,
-                          color: isMe ? Colors.white.withOpacity(0.7) : AppColors.textSecondary,
+                          color: sentByMe ? Colors.white.withOpacity(0.7) : AppColors.textSecondary,
                         ),
                       ),
-                      if (isMe) ...[
+                      if (sentByMe) ...[
                         const SizedBox(width: 4),
                         Icon(
-                          message.status == MessageStatus.read
+                          message.status.toLowerCase() == 'read'
                               ? Icons.done_all
                               : Icons.done,
                           size: 14,
-                          color: message.status == MessageStatus.read
+                          color: message.status.toLowerCase() == 'read'
                               ? Colors.blue
                               : Colors.white.withOpacity(0.7),
                         ),
@@ -448,7 +449,7 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
           ),
-          if (isMe) const SizedBox(width: 8),
+          if (sentByMe) const SizedBox(width: 8),
         ],
       ),
     );
@@ -462,20 +463,3 @@ class _MessageBubble extends StatelessWidget {
   }
 }
 
-class ChatMessage {
-  final String id;
-  final String text;
-  final bool isSentByMe;
-  final DateTime timestamp;
-  final MessageStatus status;
-
-  ChatMessage({
-    required this.id,
-    required this.text,
-    required this.isSentByMe,
-    required this.timestamp,
-    required this.status,
-  });
-}
-
-enum MessageStatus { sent, delivered, read }

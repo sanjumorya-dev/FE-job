@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:dihaadi_app/constants/colors.dart';
+import 'package:dihaadi_app/data/services/rating_service.dart';
 
 class WorkerRateOwnerScreen extends StatefulWidget {
   final String ownerName;
   final String jobTitle;
+  final String? ownerId;
+  final String? requirementId;
 
   const WorkerRateOwnerScreen({
     super.key,
     required this.ownerName,
     required this.jobTitle,
+    this.ownerId,
+    this.requirementId,
   });
 
   @override
@@ -19,6 +24,7 @@ class _WorkerRateOwnerScreenState extends State<WorkerRateOwnerScreen> {
   int _rating = 0;
   final TextEditingController _feedbackController = TextEditingController();
   bool _isSubmitting = false;
+  final RatingService _ratingService = RatingService();
 
   final List<String> _quickFeedback = [
     'Good communication',
@@ -60,10 +66,28 @@ class _WorkerRateOwnerScreenState extends State<WorkerRateOwnerScreen> {
 
     setState(() => _isSubmitting = true);
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      await _ratingService.rateOwner(
+        ownerId: widget.ownerId ?? '',
+        requirementId: widget.requirementId ?? '',
+        rating: _rating,
+        feedback: _feedbackController.text.trim(),
+        tags: _selectedFeedback,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unable to submit rating: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      setState(() => _isSubmitting = false);
+      return;
+    }
 
-    setState(() => _isSubmitting = false);
+    if (mounted) setState(() => _isSubmitting = false);
 
     if (mounted) {
       showDialog(

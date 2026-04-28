@@ -7,6 +7,7 @@ class CreateRequirementRequest {
   final int femaleCount;
   final DateTime? dutyStartTime;
   final DateTime? dutyEndTime;
+  final String? salaryPeriod;
   final double? salary;
   final String? address;
   final String? city;
@@ -26,6 +27,7 @@ class CreateRequirementRequest {
     this.femaleCount = 0,
     this.dutyStartTime,
     this.dutyEndTime,
+    this.salaryPeriod,
     this.salary,
     this.address,
     this.city,
@@ -47,6 +49,7 @@ class CreateRequirementRequest {
       'FemaleCount': femaleCount,
       'DutyStartTime': dutyStartTime?.toUtc().toIso8601String(),
       'DutyEndTime': dutyEndTime?.toUtc().toIso8601String(),
+      'SalaryPeriod': salaryPeriod,
       'Salary': salary,
       'Address': address,
       'City': city,
@@ -56,6 +59,27 @@ class CreateRequirementRequest {
       'Images': images,
       if (status != null) 'Status': status,
       if (date != null) 'Date': date?.toUtc().toIso8601String(),
+    };
+  }
+
+  Map<String, dynamic> toUpdateJson(String id) {
+    return {
+      'id': id,
+      'workTypeIds': workTypeIds,
+      'title': title,
+      'description': description,
+      'personNeed': personNeed,
+      'maleCount': maleCount,
+      'femaleCount': femaleCount,
+      'dutyStartTime': dutyStartTime?.toUtc().toIso8601String(),
+      'dutyEndTime': dutyEndTime?.toUtc().toIso8601String(),
+      'salaryPeriod': salaryPeriod,
+      'salary': salary,
+      'address': address,
+      'city': city,
+      'state': state,
+      'pincode': pincode,
+      'country': country,
     };
   }
 }
@@ -91,7 +115,15 @@ class Requirement {
   final double? salary;
   final int status;
   final int? personNeed;
+  final int maleCount;
+  final int femaleCount;
   final String? address;
+  final String? city;
+  final String? state;
+  final String? pincode;
+  final String? country;
+  final String? salaryPeriod;
+  final List<String> images;
   final String? userId;
   final DateTime? date;
 
@@ -108,27 +140,51 @@ class Requirement {
     this.salary,
     this.status = 0,
     this.personNeed,
+    this.maleCount = 0,
+    this.femaleCount = 0,
     this.address,
+    this.city,
+    this.state,
+    this.pincode,
+    this.country,
+    this.salaryPeriod,
+    this.images = const [],
     this.userId,
     this.date,
   });
 
   factory Requirement.fromJson(Map<String, dynamic> json) {
     final dynamic workTypeIdsValue = json['workTypeIds'] ?? json['WorkTypeIds'];
+    final dynamic workTypesValue = json['workTypes'] ?? json['WorkTypes'];
+    final List<RequirementWorkType> parsedWorkTypes = workTypesValue is List
+        ? workTypesValue
+            .map((e) {
+              if (e is String) {
+                return RequirementWorkType(
+                  id: '',
+                  name: e,
+                  description: '',
+                );
+              }
+              if (e is Map) {
+                return RequirementWorkType.fromJson(
+                  Map<String, dynamic>.from(e),
+                );
+              }
+              return null;
+            })
+            .whereType<RequirementWorkType>()
+            .toList()
+        : const [];
     final List<String> parsedWorkTypeIds = workTypeIdsValue is List
         ? workTypeIdsValue.map((e) => e.toString()).toList()
         : [
             if ((json['workTypeId'] ?? json['WorkTypeId']) != null)
               (json['workTypeId'] ?? json['WorkTypeId']).toString(),
+            ...parsedWorkTypes
+                .map((workType) => workType.id)
+                .where((id) => id.trim().isNotEmpty),
           ];
-
-    final dynamic workTypesValue = json['workTypes'] ?? json['WorkTypes'];
-    final List<RequirementWorkType> parsedWorkTypes = workTypesValue is List
-        ? workTypesValue
-            .whereType<Map>()
-            .map((e) => RequirementWorkType.fromJson(Map<String, dynamic>.from(e)))
-            .toList()
-        : const [];
 
     return Requirement(
       id: (json['id'] ?? json['Id'] ?? '').toString(),
@@ -146,11 +202,7 @@ class Requirement {
           : json['DutyEndTime'] != null
               ? DateTime.tryParse(json['DutyEndTime'].toString())
               : null,
-      salary: json['salary'] != null
-          ? (json['salary'] as num).toDouble()
-          : json['Salary'] != null
-              ? (json['Salary'] as num).toDouble()
-              : null,
+      salary: _parseDouble(json['salary'] ?? json['Salary']),
       status: json['status'] is int
           ? json['status']
           : json['Status'] is int
@@ -161,15 +213,44 @@ class Requirement {
           : json['PersonNeed'] != null
               ? (json['PersonNeed'] as num).toInt()
               : null,
+      maleCount: json['maleCount'] != null
+          ? (json['maleCount'] as num).toInt()
+          : json['MaleCount'] != null
+              ? (json['MaleCount'] as num).toInt()
+              : 0,
+      femaleCount: json['femaleCount'] != null
+          ? (json['femaleCount'] as num).toInt()
+          : json['FemaleCount'] != null
+              ? (json['FemaleCount'] as num).toInt()
+              : 0,
       address: (json['fulladdress'] ?? json['fullAddress'] ?? json['address'] ?? json['Address'])
           ?.toString(),
-      userId: (json['userId'] ?? json['UserId'])?.toString(),
+      city: (json['city'] ?? json['City'])?.toString(),
+      state: (json['state'] ?? json['State'])?.toString(),
+      pincode: (json['pincode'] ?? json['Pincode'])?.toString(),
+      country: (json['country'] ?? json['Country'])?.toString(),
+      salaryPeriod: (json['salaryPeriod'] ?? json['SalaryPeriod'])?.toString(),
+      images: _parseStringList(json['images'] ?? json['Images']),
+      userId:
+          (json['userId'] ?? json['UserId'] ?? json['ownerId'] ?? json['OwnerId'])
+              ?.toString(),
       date: json['date'] != null
           ? DateTime.tryParse(json['date'].toString())
           : json['Date'] != null
               ? DateTime.tryParse(json['Date'].toString())
               : null,
     );
+  }
+
+  static List<String> _parseStringList(dynamic value) {
+    if (value is! List) return const [];
+    return value.where((e) => e != null).map((e) => e.toString()).toList();
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
   }
 }
 
