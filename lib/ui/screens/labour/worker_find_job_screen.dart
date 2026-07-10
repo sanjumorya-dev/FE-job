@@ -38,18 +38,23 @@ class _WorkerFindJobScreenState extends State<WorkerFindJobScreen> {
               return const LoadingScreen();
             }
 
-            // Local filtering for demonstration/functional UI
-            final filteredJobs = viewModel.availableJobs.where((job) {
+            // Local filtering based on tabs
+            final filteredJobs = viewModel.recentApplications.where((job) {
               final matchesSearch = _searchQuery.isEmpty ||
                   job.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
                   (job.address?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
-              
-              // Filter logic based on tabs
-              if (_selectedFilterIndex == 1) { // Applied
-                 return viewModel.recentApplications.any((a) => a.id == job.id);
+
+              final status = (job.status ?? 0) as int;
+              switch (_selectedFilterIndex) {
+                case 1: // Pending applications
+                  return status == 0 && matchesSearch;
+                case 2: // In Progress (Accepted)
+                  return status == 1 && matchesSearch;
+                case 3: // Completed
+                  return status == 3 && matchesSearch;
+                default: // Available (not yet applied)
+                  return !viewModel.recentApplications.any((a) => a.id == job.id) && matchesSearch;
               }
-              // For now other tabs show available jobs
-              return matchesSearch;
             }).toList();
 
             return Column(
@@ -60,8 +65,8 @@ class _WorkerFindJobScreenState extends State<WorkerFindJobScreen> {
                   filterTabs: [
                     'Available',
                     'Applied (${viewModel.recentApplications.length})',
-                    'In Progress (1)',
-                    'Completed'
+                    'In Progress (${viewModel.stats['ongoing'] ?? '0'})',
+                    'Completed (${viewModel.stats['completed'] ?? '0'})'
                   ],
                   onTabChanged: (index) => setState(() => _selectedFilterIndex = index),
                   onSearchChanged: (val) => setState(() => _searchQuery = val),

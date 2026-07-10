@@ -22,6 +22,9 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LabourViewModel>().fetchRecentApplications();
+    });
   }
 
   @override

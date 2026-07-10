@@ -101,9 +101,13 @@ class RequirementService {
   }
 
   /// Get user's applications
-  Future<List<Requirement>> getMyApplications() async {
+  ///
+  /// [status] optionally filters by application status:
+  ///   null = all statuses, 0 = Pending, 1 = Accepted, 2 = Rejected, 3 = Completed
+  Future<List<Requirement>> getMyApplications({int? status}) async {
     try {
-      final response = await _client.get('/Requirement/byUserId?status=0');
+      final query = status != null ? '?status=$status' : '';
+      final response = await _client.get('/Requirement/byUserId$query');
       final dynamic body = jsonDecode(response.body);
 
       final list = _extractList(body, listKey: 'requirements');

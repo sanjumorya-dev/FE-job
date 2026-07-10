@@ -16,6 +16,8 @@ class LabourViewModel extends ChangeNotifier {
 
   // Dashboard Features (Restored)
   bool _isAvailable = true;
+  double _averageRating = 0.0;
+  int _totalRatings = 0;
   Map<String, String> _stats = {
     'jobsApplied': '0',
     'approved': '0',
@@ -25,6 +27,8 @@ class LabourViewModel extends ChangeNotifier {
   List<Requirement> _recentApplications = [];
 
   bool get isAvailable => _isAvailable;
+  double get averageRating => _averageRating;
+  int get totalRatings => _totalRatings;
   Map<String, String> get stats => _stats;
   List<Requirement> get recentApplications => _recentApplications;
 
@@ -39,9 +43,12 @@ class LabourViewModel extends ChangeNotifier {
       _stats = {
         'jobsApplied': stats.appliedJobs.toString(),
         'approved': stats.acceptedJobs.toString(),
-        'ongoing': stats.completedJobs.toString(),
+        'ongoing': stats.acceptedJobs.toString(), // accepted = in-progress for workers
+        'completed': stats.completedJobs.toString(),
         'earnings': stats.earnings.toStringAsFixed(0),
       };
+      _averageRating = stats.averageRating;
+      _totalRatings = stats.totalRatings;
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -53,9 +60,15 @@ class LabourViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
+      // Fetch all applications (no status filter) so tabs can filter client-side
       _recentApplications = await _apiService.getMyApplications();
       // Update stats based on fetched applications
       _stats['jobsApplied'] = _recentApplications.length.toString();
+      // Update in-progress count (status 1 = Accepted)
+      _stats['ongoing'] = _recentApplications
+          .where((a) => (a.status ?? 0) == 1)
+          .length
+          .toString();
     } catch (e) {
       debugPrint("Error fetching applications: $e");
       // Keep empty list on error

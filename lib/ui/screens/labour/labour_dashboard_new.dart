@@ -163,11 +163,13 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
                 ),
 
                 WorkerStatsGrid(
-                  tasksCompleted: int.tryParse(stats['approved'] ?? '28') ?? 28,
-                  requestedJobs: int.tryParse(stats['jobsApplied'] ?? '12') ?? 12,
+                  tasksCompleted: int.tryParse(stats['approved'] ?? '0') ?? 0,
+                  requestedJobs: int.tryParse(stats['jobsApplied'] ?? '0') ?? 0,
                   monthlyEarnings:
-                      double.tryParse(stats['earnings'] ?? '18400') ?? 18400,
-                  averageRating: 4.8,
+                      double.tryParse(stats['earnings'] ?? '0') ?? 0,
+                  averageRating: viewModel.averageRating > 0
+                      ? viewModel.averageRating
+                      : 0.0,
                 ),
 
                 WorkerStatusBanner(
@@ -183,8 +185,8 @@ class _LabourDashboardNewState extends State<LabourDashboardNew> {
                   filterTabs: [
                     'Available',
                     'Applied (${viewModel.recentApplications.length})',
-                    'In Progress (1)',
-                    'Completed'
+                    'In Progress (${stats['ongoing'] ?? '0'})',
+                    'Completed (${stats['completed'] ?? '0'})'
                   ],
                   onTabChanged: (index) => setState(() => _selectedFilterIndex = index),
                   onSearchChanged: (val) => setState(() => _searchQuery = val),

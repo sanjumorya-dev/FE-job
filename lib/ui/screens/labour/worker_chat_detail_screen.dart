@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 import 'package:dihaadi_app/data/models/chat_model.dart' as chat;
 import 'package:dihaadi_app/data/services/chat_service.dart';
+import 'package:dihaadi_app/data/services/requirement_service.dart';
 import 'package:dihaadi_app/ui/screens/labour/worker_rate_owner_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
@@ -22,6 +23,7 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChatService _chatService = ChatService();
+  final RequirementService _requirementService = RequirementService();
 
   List<chat.ChatMessage> _messages = [];
 
@@ -132,33 +134,42 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
     );
   }
 
-  void _completeJob() {
-    setState(() {
-      _isJobCompleted = true;
-    });
+  Future<void> _completeJob() async {
+    try {
+      await _requirementService.completeJob(widget.conversation.requirementId);
+      if (!mounted) return;
+      setState(() {
+        _isJobCompleted = true;
+      });
 
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => WorkerRateOwnerScreen(
-              ownerName: widget.conversation.participantName,
-              jobTitle: widget.conversation.jobTitle,
-              ownerId: widget.conversation.participantId,
-              requirementId: widget.conversation.requirementId,
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => WorkerRateOwnerScreen(
+                ownerName: widget.conversation.participantName,
+                jobTitle: widget.conversation.jobTitle,
+                ownerId: widget.conversation.participantId,
+                requirementId: widget.conversation.requirementId,
+              ),
             ),
-          ),
-        );
-      }
-    });
+          );
+        }
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Job marked as completed!'),
-        backgroundColor: AppColors.success,
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Job marked as completed!'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to complete job: $e')),
+      );
+    }
   }
 
   @override
