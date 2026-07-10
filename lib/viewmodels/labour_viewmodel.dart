@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import '../core/di/injection_container.dart';
+import '../core/notifications/notification_service.dart';
+import '../core/storage/cache_manager.dart';
 import '../data/models/requirement_model.dart';
 import '../data/services/requirement_service.dart';
 import '../data/services/dashboard_service.dart';
 
 class LabourViewModel extends ChangeNotifier {
-  final RequirementService _apiService = RequirementService();
-  final DashboardService _dashboardService = DashboardService();
+  final RequirementService _apiService = sl<RequirementService>();
+  final DashboardService _dashboardService = sl<DashboardService>();
+  final CacheManager _cacheManager = cacheManager;
+  final NotificationService _notificationService = sl<NotificationService>();
+
   List<Requirement> _availableJobs = [];
   bool _isLoading = false;
   String? _error;
@@ -43,7 +49,7 @@ class LabourViewModel extends ChangeNotifier {
       _stats = {
         'jobsApplied': stats.appliedJobs.toString(),
         'approved': stats.acceptedJobs.toString(),
-        'ongoing': stats.acceptedJobs.toString(), // accepted = in-progress for workers
+        'ongoing': stats.acceptedJobs.toString(),
         'completed': stats.completedJobs.toString(),
         'earnings': stats.earnings.toStringAsFixed(0),
       };
@@ -60,37 +66,53 @@ class LabourViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      // Fetch all applications (no status filter) so tabs can filter client-side
       _recentApplications = await _apiService.getMyApplications();
-      // Update stats based on fetched applications
       _stats['jobsApplied'] = _recentApplications.length.toString();
-      // Update in-progress count (status 1 = Accepted)
       _stats['ongoing'] = _recentApplications
-          .where((a) => (a.status ?? 0) == 1)
+          .where((a) => a.status == 1)
           .length
           .toString();
     } catch (e) {
       debugPrint("Error fetching applications: $e");
-      // Keep empty list on error
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
+  /// Fetch jobs using cache-first strategy:
+  /// 1. Load from cache immediately (if available)
+  /// 2. Fetch from API in background and update UI
   Future<void> fetchJobs() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      _availableJobs = await _apiService.getLabourList();
+    // 1. Try to load from cache first for instant UI
+    if (_cacheManager.hasValidJobsCache()) {
+      _availableJobs = _cacheManager.getCachedJobs();
       _isLoading = false;
+      notifyListeners();
+    } else {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+    }
+
+    // 2. Fetch from API in background
+    try {
+      final jobs = await _apiService.getLabourList();
+      _availableJobs = jobs;
+      _error = null;
+
+      // Update cache
+      await _cacheManager.cacheJobs(jobs);
     } catch (e) {
       _error = e.toString();
+      // If we had cached data, keep showing it but show error
+      if (_availableJobs.isEmpty) {
+        _isLoading = false;
+      }
+    } finally {
       _isLoading = false;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   Future<bool> applyForJob(String requirementId) async {
@@ -99,8 +121,16 @@ class LabourViewModel extends ChangeNotifier {
 
     try {
       await _apiService.applyForRequirement(requirementId);
-      // Refresh applications list
       await fetchRecentApplications();
+
+      // Trigger local notification to confirm application
+      await _notificationService.showLocalNotification(
+        title: 'Application Submitted',
+        body: 'Your application has been sent to the employer.',
+        id: requirementId.hashCode,
+        payload: '/profile',
+      );
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -112,5 +142,3 @@ class LabourViewModel extends ChangeNotifier {
     }
   }
 }
-
-

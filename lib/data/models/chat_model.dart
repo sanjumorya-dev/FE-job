@@ -71,4 +71,14 @@ class ChatMessage {
       status: (json['status'] ?? json['Status'] ?? 'sent').toString(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'senderId': senderId,
+      'text': text,
+      'timestamp': timestamp.toUtc().toIso8601String(),
+      'status': status,
+    };
+  }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../core/di/injection_container.dart';
 import '../../core/network/dio_client.dart';
-import '../models/application_request_model.dart';
 
 class ApplicationRequestService {
   final DioClient _client = sl<DioClient>();
@@ -171,7 +170,7 @@ class CreateApplicationRequest {
     return {
       'requirementId': requirementId,
       if (coverLetter != null && coverLetter!.isNotEmpty) 'coverLetter': coverLetter,
-      if (skills != null && skills.isNotEmpty) 'skills': skills,
+      if (skills != null && skills!.isNotEmpty) 'skills': skills,
     };
   }
 }

@@ -1,5 +1,5 @@
-// ignore_for_file: prefer_const_constructors
-
+import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +8,8 @@ import 'constants/colors.dart';
 import 'core/di/injection_container.dart';
 import 'core/network/dio_client.dart';
 import 'core/routing/app_router.dart';
+import 'core/storage/cache_manager.dart';
+import 'core/notifications/notification_service.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/owner_viewmodel.dart';
 import 'viewmodels/labour_viewmodel.dart';
@@ -15,6 +17,14 @@ import 'viewmodels/work_type_viewmodel.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Initialize Hive for offline-first storage
+  await Hive.initFlutter();
+  await cacheManager.init();
+
   await initDependencies();
   runApp(const DihaadiApp());
 }
@@ -29,12 +39,17 @@ class DihaadiApp extends StatefulWidget {
 class _DihaadiAppState extends State<DihaadiApp> {
   late final AuthViewModel _authViewModel;
   late final GoRouter _router;
+  late final NotificationService _notificationService;
 
   @override
   void initState() {
     super.initState();
     _authViewModel = AuthViewModel();
     _router = createRouter(_authViewModel);
+
+    // Initialize Notification Service
+    _notificationService = NotificationService();
+    _notificationService.init(_router);
 
     // Wire up 401 → logout + redirect to /role-selection
     sl<DioClient>().setOnUnauthorized(() {
@@ -48,6 +63,7 @@ class _DihaadiAppState extends State<DihaadiApp> {
   @override
   void dispose() {
     _router.dispose();
+    _notificationService.dispose();
     super.dispose();
   }
 

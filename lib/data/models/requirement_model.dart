@@ -102,6 +102,14 @@ class RequirementWorkType {
       description: (json['description'] ?? json['Description'] ?? '').toString(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+    };
+  }
 }
 
 class Requirement {
@@ -128,6 +136,32 @@ class Requirement {
   final DateTime? date;
 
   String get workTypeId => workTypeIds.isNotEmpty ? workTypeIds.first : '';
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'workTypeIds': workTypeIds,
+      'workTypes': workTypes.map((e) => e.toJson()).toList(),
+      'title': title,
+      'description': description,
+      'dutyStartTime': dutyStartTime?.toUtc().toIso8601String(),
+      'dutyEndTime': dutyEndTime?.toUtc().toIso8601String(),
+      'salary': salary,
+      'status': status,
+      'personNeed': personNeed,
+      'maleCount': maleCount,
+      'femaleCount': femaleCount,
+      'address': address,
+      'city': city,
+      'state': state,
+      'pincode': pincode,
+      'country': country,
+      'salaryPeriod': salaryPeriod,
+      'images': images,
+      'userId': userId,
+      'date': date?.toUtc().toIso8601String(),
+    };
+  }
 
   Requirement({
     required this.id,

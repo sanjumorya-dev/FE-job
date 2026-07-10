@@ -36,6 +36,13 @@ dependencies:
   # Data & Storage
   json_serializable: ^6.7.1 # Better JSON serialization
   isar: ^3.1.0 # Fast local database
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0 # Offline-first local storage
+
+  # Push Notifications
+  firebase_core: ^2.24.0
+  firebase_messaging: ^14.7.0
+  flutter_local_notifications: ^16.0.0
 
   # Utilities
   connectivity_plus: ^5.0.0 # Network monitoring
