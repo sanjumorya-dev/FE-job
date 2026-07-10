@@ -7,6 +7,7 @@ import 'package:dihaadi_app/data/services/requirement_service.dart';
 import 'package:dihaadi_app/ui/screens/owner/owner_chat_detail_screen.dart';
 import 'package:dihaadi_app/viewmodels/owner_viewmodel.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ApplicantProfileScreen extends StatefulWidget {
   final Applicant applicant;
@@ -275,9 +276,19 @@ class _ApplicantProfileScreenState extends State<ApplicantProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (_isRequirementLoading)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 14),
-                  child: LinearProgressIndicator(minHeight: 2),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Shimmer.fromColors(
+                    baseColor: Colors.grey.shade300,
+                    highlightColor: Colors.grey.shade100,
+                    child: Container(
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
                 ),
               Center(
                 child: Column(

@@ -4,6 +4,7 @@ import 'package:dihaadi_app/data/models/chat_model.dart' as chat;
 import 'package:dihaadi_app/data/services/chat_service.dart';
 import 'package:dihaadi_app/data/services/requirement_service.dart';
 import 'package:dihaadi_app/ui/screens/labour/worker_rate_owner_screen.dart';
+import 'package:dihaadi_app/ui/widgets/shimmers/job_list_shimmer.dart';
 import 'package:provider/provider.dart';
 import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
 
@@ -304,7 +305,7 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
           // Messages List
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const MessageListShimmer()
                 : ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

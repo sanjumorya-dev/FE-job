@@ -2,13 +2,14 @@ import 'package:dihaadi_app/constants/colors.dart';
 import 'package:dihaadi_app/ui/screens/labour/job_details_screen.dart';
 import 'package:dihaadi_app/ui/screens/labour/my_applications_screen.dart';
 import 'package:dihaadi_app/ui/screens/labour/worker_chat_list_screen.dart';
-import 'package:dihaadi_app/ui/screens/loading_screen.dart';
 import 'package:dihaadi_app/ui/screens/profile_screen.dart';
 import 'package:dihaadi_app/ui/widgets/worker_dashboard_header.dart';
 import 'package:dihaadi_app/ui/widgets/worker_stats_grid.dart';
 import 'package:dihaadi_app/ui/widgets/worker_status_banner.dart';
 import 'package:dihaadi_app/ui/widgets/job_search_header.dart';
 import 'package:dihaadi_app/ui/widgets/worker_job_card.dart';
+import 'package:dihaadi_app/ui/widgets/empty_state.dart';
+import 'package:dihaadi_app/ui/widgets/shimmers/job_list_shimmer.dart';
 import 'package:dihaadi_app/ui/screens/labour/worker_find_job_screen.dart';
 import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
 import 'package:dihaadi_app/viewmodels/labour_viewmodel.dart';
@@ -132,112 +133,110 @@ class _LabourDashboardState extends State<LabourDashboard> {
   Widget _buildHomeFeed() {
     return Consumer<LabourViewModel>(
       builder: (context, viewModel, child) {
-        if (viewModel.isLoading) {
-          return const LoadingScreen();
-        }
-
-        final stats = viewModel.stats;
-
         return RefreshIndicator(
           onRefresh: () async {
             await viewModel.fetchJobs();
             await viewModel.fetchDashboardStats();
           },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Consumer<AuthViewModel>(
-                  builder: (context, authVm, child) {
-                    final user = authVm.currentUser;
-                    return WorkerDashboardHeader(
-                      userName: user?.name ?? 'Rahul',
-                      location: user?.addresses?.isNotEmpty == true
-                          ? '${user!.addresses![0]['city']}, ${user.addresses![0]['state']}'
-                          : 'Mumbai, Maharashtra',
-                      onNotificationTap: () {},
-                      onProfileTap: () => setState(() => _currentIndex = 3),
-                    );
-                  },
-                ),
-
-                WorkerStatsGrid(
-                  tasksCompleted: int.tryParse(stats['approved'] ?? '0') ?? 0,
-                  requestedJobs: int.tryParse(stats['jobsApplied'] ?? '0') ?? 0,
-                  monthlyEarnings:
-                      double.tryParse(stats['earnings'] ?? '0') ?? 0,
-                  averageRating: viewModel.averageRating > 0
-                      ? viewModel.averageRating
-                      : 0.0,
-                ),
-
-                WorkerStatusBanner(
-                  activeApplications: viewModel.recentApplications.length,
-                  isAvailable: viewModel.isAvailable,
-                  onAvailabilityChanged: (val) =>
-                      viewModel.toggleAvailability(val),
-                ),
-
-                JobSearchHeader(
-                  title: 'Find Jobs',
-                  selectedIndex: _selectedFilterIndex,
-                  filterTabs: [
-                    'Available',
-                    'Applied (${viewModel.recentApplications.length})',
-                    'In Progress (${stats['ongoing'] ?? '0'})',
-                    'Completed (${stats['completed'] ?? '0'})'
-                  ],
-                  onTabChanged: (index) => setState(() => _selectedFilterIndex = index),
-                  onSearchChanged: (val) => setState(() => _searchQuery = val),
-                  onFilterTap: () {},
-                ),
-
-                if (viewModel.availableJobs.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(60.0),
-                      child: Column(
-                        children: [
-                          Icon(Icons.search_off_rounded, size: 48, color: AppColors.textHint),
-                          SizedBox(height: 16),
-                          Text(
-                            'No jobs available right now',
-                            style: TextStyle(color: AppColors.textHint, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    itemCount: viewModel.availableJobs.length,
-                    itemBuilder: (context, index) {
-                      final job = viewModel.availableJobs[index];
-                      return WorkerJobCard(
-                        requirement: job,
-                        isApplied: viewModel.recentApplications
-                            .any((a) => a.id == job.id),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    JobDetailsScreen(job: job)),
-                          );
-                        },
-                      );
-                    },
+          child: viewModel.isLoading
+              ? const SingleChildScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: JobListShimmer(),
                   ),
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
+                )
+              : _buildHomeContent(viewModel),
         );
       },
+    );
+  }
+
+  Widget _buildHomeContent(LabourViewModel viewModel) {
+    final stats = viewModel.stats;
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Consumer<AuthViewModel>(
+            builder: (context, authVm, child) {
+              final user = authVm.currentUser;
+              return WorkerDashboardHeader(
+                userName: user?.name ?? 'Rahul',
+                location: user?.addresses?.isNotEmpty == true
+                    ? '${user!.addresses![0]['city']}, ${user.addresses![0]['state']}'
+                    : 'Mumbai, Maharashtra',
+                onNotificationTap: () {},
+                onProfileTap: () => setState(() => _currentIndex = 3),
+              );
+            },
+          ),
+
+          WorkerStatsGrid(
+            tasksCompleted: int.tryParse(stats['approved'] ?? '0') ?? 0,
+            requestedJobs: int.tryParse(stats['jobsApplied'] ?? '0') ?? 0,
+            monthlyEarnings:
+                double.tryParse(stats['earnings'] ?? '0') ?? 0,
+            averageRating: viewModel.averageRating > 0
+                ? viewModel.averageRating
+                : 0.0,
+          ),
+
+          WorkerStatusBanner(
+            activeApplications: viewModel.recentApplications.length,
+            isAvailable: viewModel.isAvailable,
+            onAvailabilityChanged: (val) =>
+                viewModel.toggleAvailability(val),
+          ),
+
+          JobSearchHeader(
+            title: 'Find Jobs',
+            selectedIndex: _selectedFilterIndex,
+            filterTabs: [
+              'Available',
+              'Applied (${viewModel.recentApplications.length})',
+              'In Progress (${stats['ongoing'] ?? '0'})',
+              'Completed (${stats['completed'] ?? '0'})'
+            ],
+            onTabChanged: (index) => setState(() => _selectedFilterIndex = index),
+            onSearchChanged: (val) => setState(() => _searchQuery = val),
+            onFilterTap: () {},
+          ),
+
+          if (viewModel.availableJobs.isEmpty)
+            const EmptyState(
+              icon: Icons.search_off_rounded,
+              title: 'No Jobs Available',
+              subtitle: 'There are no jobs matching your criteria right now.',
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              itemCount: viewModel.availableJobs.length,
+              itemBuilder: (context, index) {
+                final job = viewModel.availableJobs[index];
+                return WorkerJobCard(
+                  requirement: job,
+                  isApplied: viewModel.recentApplications
+                      .any((a) => a.id == job.id),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              JobDetailsScreen(job: job)),
+                    );
+                  },
+                );
+              },
+            ),
+          const SizedBox(height: 40),
+        ],
+      ),
     );
   }
 }

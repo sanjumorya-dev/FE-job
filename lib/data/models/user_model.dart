@@ -62,6 +62,7 @@ class User {
   final String id;
   final String name;
   final String? email;
+  final String? imageUrl;
   final String? mobileNumber;
   final String? countryCode;
   final String? aadharNo;
@@ -78,6 +79,7 @@ class User {
     required this.id,
     required this.name,
     this.email,
+    this.imageUrl,
     this.mobileNumber,
     this.countryCode,
     this.aadharNo,
@@ -118,6 +120,7 @@ class User {
       id: json['id'] ?? json['Id'] ?? '',
       name: json['name'] ?? json['Name'] ?? '',
       email: json['email'] ?? json['Email'],
+      imageUrl: json['imageUrl'] ?? json['ImageUrl'] ?? json['image'] ?? json['Image'],
       mobileNumber: json['mobileNumber'] ?? json['MobileNumber'],
       countryCode: json['countryCode'] ?? json['CountryCode'],
       aadharNo: json['aadharNo'] ?? json['AadharNo'],

@@ -5,11 +5,12 @@ import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
 import 'package:dihaadi_app/ui/screens/profile_screen.dart';
 import 'package:dihaadi_app/ui/screens/notifications_screen.dart';
 import 'package:dihaadi_app/ui/screens/owner/create_requirement_screen.dart';
-import 'package:dihaadi_app/ui/screens/loading_screen.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 import 'package:dihaadi_app/ui/widgets/owner_dashboard_header.dart';
 import 'package:dihaadi_app/ui/widgets/owner_stats_row.dart';
 import 'package:dihaadi_app/ui/widgets/owner_job_card.dart';
+import 'package:dihaadi_app/ui/widgets/empty_state.dart';
+import 'package:dihaadi_app/ui/widgets/shimmers/job_list_shimmer.dart';
 import 'package:dihaadi_app/ui/screens/owner/edit_requirement_screen.dart';
 import 'package:dihaadi_app/ui/screens/owner/owner_requirement_detail_screen.dart';
 import 'package:dihaadi_app/ui/screens/owner/owner_chat_list_screen.dart';
@@ -153,114 +154,110 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   Widget _buildDashboard() {
     return Consumer<OwnerViewModel>(
       builder: (context, viewModel, child) {
-        if (viewModel.isLoading) {
-          return const LoadingScreen();
-        }
-
         final stats = viewModel.stats;
 
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Consumer<AuthViewModel>(
-                builder: (context, authVm, child) {
-                  final user = authVm.currentUser;
-                  return OwnerDashboardHeader(
-                    userName: user?.name ?? 'Rahul Sharma',
-                    notificationCount: 3,
-                    onNotificationTap: () => setState(() => _currentIndex = 3),
-                    onProfileTap: () => setState(() => _currentIndex = 4),
-                  );
-                },
-              ),
-
-              OwnerDashboardStats(
-                activeJobs: int.tryParse(stats['activeReq'] ?? '0') ?? 0,
-                pendingApps: int.tryParse(stats['totalApplicants'] ?? '0') ?? 0,
-                completedJobs: int.tryParse(stats['completedJobs'] ?? '0') ?? 0,
-              ),
-
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Active Jobs',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.secondary,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Your recently posted requirements',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textHint,
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextButton(
-                      onPressed: () => setState(() => _currentIndex = 1),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      child: const Text('View All'),
-                    ),
-                  ],
-                ),
-              ),
-
-              if (viewModel.myRequirements.isEmpty)
-                const Center(
+        return RefreshIndicator(
+          onRefresh: () async {
+            await viewModel.fetchMyRequirements();
+            await viewModel.fetchDashboardStats();
+          },
+          child: viewModel.isLoading
+              ? const SingleChildScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
                   child: Padding(
-                    padding: EdgeInsets.all(60.0),
-                    child: Column(
-                      children: [
-                        Icon(Icons.assignment_late_rounded, size: 48, color: AppColors.textHint),
-                        SizedBox(height: 16),
-                        Text(
-                          'No active jobs found',
-                          style: TextStyle(color: AppColors.textHint, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
+                    padding: EdgeInsets.only(top: 20),
+                    child: JobListShimmer(),
                   ),
                 )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: viewModel.myRequirements.take(3).length,
-                  itemBuilder: (context, index) {
-                    final req = viewModel.myRequirements[index];
-                    return OwnerJobCard(
-                      requirement: req,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                OwnerRequirementDetailScreen(requirement: req),
-                          ),
-                        );
-                      },
-                    );
-                  },
+              : SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Consumer<AuthViewModel>(
+                        builder: (context, authVm, child) {
+                          final user = authVm.currentUser;
+                          return OwnerDashboardHeader(
+                            userName: user?.name ?? 'Rahul Sharma',
+                            notificationCount: 3,
+                            onNotificationTap: () => setState(() => _currentIndex = 3),
+                            onProfileTap: () => setState(() => _currentIndex = 4),
+                          );
+                        },
+                      ),
+
+                      OwnerDashboardStats(
+                        activeJobs: int.tryParse(stats['activeReq'] ?? '0') ?? 0,
+                        pendingApps: int.tryParse(stats['totalApplicants'] ?? '0') ?? 0,
+                        completedJobs: int.tryParse(stats['completedJobs'] ?? '0') ?? 0,
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Active Jobs',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Your recently posted requirements',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textHint,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            TextButton(
+                              onPressed: () => setState(() => _currentIndex = 1),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              child: const Text('View All'),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      if (viewModel.myRequirements.isEmpty)
+                        const EmptyState.noJobs()
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: viewModel.myRequirements.take(3).length,
+                          itemBuilder: (context, index) {
+                            final req = viewModel.myRequirements[index];
+                            return OwnerJobCard(
+                              requirement: req,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        OwnerRequirementDetailScreen(requirement: req),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 120),
+                    ],
+                  ),
                 ),
-              const SizedBox(height: 120),
-            ],
-          ),
         );
       },
     );
@@ -269,8 +266,6 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   Widget _buildRequirements() {
     return Consumer<OwnerViewModel>(
       builder: (context, viewModel, child) {
-        if (viewModel.isLoading) return const LoadingScreen();
-
         final activeCount = viewModel.myRequirements.where((r) => r.status == 0).length;
         final pendingCount = viewModel.myRequirements.where((r) => r.status == 1).length;
         final draftCount = viewModel.myRequirements.where((r) => r.status == 2).length;
@@ -368,14 +363,16 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               Expanded(
                 child: Container(
                   color: const Color(0xFFF1F4F8),
-                  child: IndexedStack(
-                    index: _selectedFilterIndex,
-                    children: [
-                      _buildRequirementList(viewModel, status: 0),
-                      _buildRequirementList(viewModel, status: 1),
-                      _buildRequirementList(viewModel, status: 2),
-                    ],
-                  ),
+                  child: viewModel.isLoading
+                      ? const JobListShimmer(padding: EdgeInsets.fromLTRB(16, 14, 16, 130))
+                      : IndexedStack(
+                          index: _selectedFilterIndex,
+                          children: [
+                            _buildRequirementList(viewModel, status: 0),
+                            _buildRequirementList(viewModel, status: 1),
+                            _buildRequirementList(viewModel, status: 2),
+                          ],
+                        ),
                 ),
               ),
             ],
@@ -397,10 +394,32 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
     if (filtered.isEmpty) {
       String message = 'No active jobs';
-      if (status == 1) message = 'No completed jobs';
-      if (status == 2) message = 'No drafts';
+      IconData icon = Icons.work_off_rounded;
+      if (status == 1) {
+        message = 'No completed jobs';
+        icon = Icons.check_circle_outline_rounded;
+      }
+      if (status == 2) {
+        message = 'No drafts';
+        icon = Icons.edit_note_rounded;
+      }
       
-      return Center(child: Text(message, style: const TextStyle(color: AppColors.textHint)));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 48, color: AppColors.textHint),
+              const SizedBox(height: 16),
+              Text(
+                message,
+                style: const TextStyle(color: AppColors.textHint, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return ListView.builder(

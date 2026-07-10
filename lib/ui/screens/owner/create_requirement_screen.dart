@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:dihaadi_app/constants/api_config.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dihaadi_app/data/services/common_service.dart';
+import 'package:dihaadi_app/data/services/media_service.dart';
 import 'package:dihaadi_app/viewmodels/work_type_viewmodel.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 import 'dart:io';
@@ -53,6 +54,7 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
   final List<XFile> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
   final CommonService _commonService = CommonService();
+  final MediaService _mediaService = MediaService();
 
 
   @override
@@ -324,19 +326,31 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
   }
 
   Future<void> _pickImage() async {
-    if (_selectedImages.length >= 3) {
+    if (_selectedImages.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Maximum 3 images allowed")),
+        const SnackBar(content: Text("Maximum 5 images allowed")),
       );
       return;
     }
 
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
       if (image != null) {
-        setState(() {
-          _selectedImages.add(image);
-        });
+        // Compress the image
+        final file = File(image.path);
+        final compressed = await _mediaService.pickImageFromGallery();
+        if (compressed != null) {
+          setState(() {
+            _selectedImages.add(XFile(compressed.path));
+          });
+        } else {
+          setState(() {
+            _selectedImages.add(image);
+          });
+        }
       }
     } catch (e) {
       debugPrint("Error picking image: $e");
@@ -1000,7 +1014,7 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
                   SizedBox(height: 12),
                   Text('Add image', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2F3A50))),
                   SizedBox(height: 4),
-                  Text('Max 3', style: TextStyle(fontSize: 11, color: Color(0xFF9AA1B4))),
+                  Text('Max 5', style: TextStyle(fontSize: 11, color: Color(0xFF9AA1B4))),
                 ],
               ),
             ),

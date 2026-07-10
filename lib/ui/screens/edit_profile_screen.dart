@@ -1,7 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:dihaadi_app/data/models/user_model.dart';
 import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
+import 'package:dihaadi_app/core/di/injection_container.dart';
+import 'package:dihaadi_app/data/services/media_service.dart';
+import 'package:dihaadi_app/data/services/upload_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final User user;
@@ -29,6 +34,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _mobileVerified = false;
   String? _mobileError;
 
+  // Profile image state
+  File? _selectedImage;
+  String? _currentImageUrl;
+  bool _isUploadingImage = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +48,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     mobileCtrl = TextEditingController(text: widget.user.mobileNumber ?? '');
     originalMobile = widget.user.mobileNumber ?? '';
     _countryCode = (widget.user.countryCode ?? '+91').trim();
+    _currentImageUrl = widget.user.imageUrl;
 
     // Address fields
     final addr = widget.user.addresses?.isNotEmpty == true
@@ -125,6 +136,70 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<void> _pickProfileImage() async {
+    final mediaService = sl<MediaService>();
+    final uploadService = sl<UploadService>();
+
+    // Show bottom sheet to choose source
+    if (!mounted) return;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    setState(() => _isUploadingImage = true);
+
+    try {
+      File? image;
+      if (source == ImageSource.gallery) {
+        image = await mediaService.pickImageFromGallery();
+      } else {
+        image = await mediaService.pickImageFromCamera();
+      }
+
+      if (image == null) {
+        setState(() => _isUploadingImage = false);
+        return;
+      }
+
+      // Upload the image
+      final imageUrl = await uploadService.uploadProfileImage(image);
+
+      if (mounted) {
+        setState(() {
+          _selectedImage = image;
+          _currentImageUrl = imageUrl;
+          _isUploadingImage = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload image: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _submit() async {
     if (_isMobileChanged && !_mobileVerified) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -148,6 +223,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'State': stateCtrl.text.trim(),
         'Pincode': pincodeCtrl.text.trim(),
         'Country': countryCtrl.text.trim(),
+        if (_currentImageUrl != null) 'ImageUrl': _currentImageUrl,
       };
 
       final success = await authVm.updateProfile(updateData);
@@ -186,6 +262,69 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Profile Image Picker
+            Center(
+              child: GestureDetector(
+                onTap: _isUploadingImage ? null : _pickProfileImage,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.grey[200],
+                        image: _selectedImage != null
+                            ? DecorationImage(
+                                image: FileImage(_selectedImage!),
+                                fit: BoxFit.cover,
+                              )
+                            : (_currentImageUrl != null &&
+                                    _currentImageUrl!.isNotEmpty)
+                                ? DecorationImage(
+                                    image: NetworkImage(_currentImageUrl!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                      ),
+                      child: (_selectedImage == null &&
+                              (_currentImageUrl == null ||
+                                  _currentImageUrl!.isEmpty))
+                          ? const Icon(Icons.person, size: 60, color: Colors.grey)
+                          : null,
+                    ),
+                    if (_isUploadingImage)
+                      const Positioned.fill(
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black45,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Name Field
             TextField(
               controller: nameCtrl,

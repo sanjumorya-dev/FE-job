@@ -18,7 +18,9 @@ import '../../data/services/common_service.dart';
 import '../../data/services/config_service.dart';
 import '../../data/services/dispute_service.dart';
 import '../../data/services/location_service.dart';
+import '../../data/services/media_service.dart';
 import '../../data/services/preference_service.dart';
+import '../../data/services/upload_service.dart';
 
 final sl = GetIt.instance;
 
@@ -67,4 +69,6 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<DisputeService>(() => DisputeService());
   sl.registerLazySingleton<LocationService>(() => LocationService());
   sl.registerLazySingleton<PreferenceService>(() => PreferenceService());
+  sl.registerLazySingleton<MediaService>(() => MediaService());
+  sl.registerLazySingleton<UploadService>(() => UploadService());
 }
