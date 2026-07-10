@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
 import 'package:dihaadi_app/data/models/user_model.dart';
 import 'role_selection_screen.dart';
-import 'owner/owner_dashboard_new.dart';
-import 'labour/labour_dashboard_new.dart';
+import 'owner/owner_dashboard.dart';
+import 'labour/labour_dashboard.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -37,12 +37,12 @@ class _SplashScreenState extends State<SplashScreen> {
         if (isOwner) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const OwnerDashboardNew()),
+            MaterialPageRoute(builder: (context) => const OwnerDashboard()),
           );
         } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const LabourDashboardNew()),
+            MaterialPageRoute(builder: (context) => const LabourDashboard()),
           );
         }
       } else {

@@ -9,8 +9,8 @@ import 'steps/step2_address_info.dart';
 import 'steps/step3_role_info.dart';
 import '../login_screen.dart';
 import '../otp_verify_screen.dart';
-import 'package:dihaadi_app/ui/screens/owner/owner_dashboard_new.dart';
-import 'package:dihaadi_app/ui/screens/labour/labour_dashboard_new.dart';
+import 'package:dihaadi_app/ui/screens/owner/owner_dashboard.dart';
+import 'package:dihaadi_app/ui/screens/labour/labour_dashboard.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -157,13 +157,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               if (selectedRole == UserRole.owner) {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const OwnerDashboardNew()),
+                  MaterialPageRoute(builder: (context) => const OwnerDashboard()),
                   (route) => false,
                 );
               } else {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const LabourDashboardNew()),
+                  MaterialPageRoute(builder: (context) => const LabourDashboard()),
                   (route) => false,
                 );
               }

@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart';
-import '../../core/http_client.dart';
+import '../../core/di/injection_container.dart';
+import '../../core/network/dio_client.dart';
 import '../models/notification_model.dart';
 
 class NotificationService {
-  final SecureHttpClient _client = SecureHttpClient();
+  final DioClient _client = sl<DioClient>();
 
   /// Get list of notifications for the current user
   ///

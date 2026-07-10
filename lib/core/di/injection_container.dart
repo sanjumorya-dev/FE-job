@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
+import '../../core/network/dio_client.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/services/user_service.dart';
 import '../../data/services/requirement_service.dart';
@@ -20,30 +21,29 @@ import '../../data/services/preference_service.dart';
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
-  // ── External ──────────────────────────────────────────────
-  sl.registerLazySingleton<Dio>(() {
-    final dio = Dio(
-      BaseOptions(
-        baseUrl: 'https://dihaadi-0lje.onrender.com/api/v1',
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      ),
-    );
+  // ── Dio base instance ─────────────────────────────────────
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: 'https://dihaadi-0lje.onrender.com/api/v1',
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    ),
+  );
 
-    dio.interceptors.add(
-      PrettyDioLogger(
-        requestBody: true,
-        responseBody: true,
-        error: true,
-        compact: true,
-      ),
-    );
+  dio.interceptors.add(
+    PrettyDioLogger(
+      requestBody: true,
+      responseBody: true,
+      error: true,
+      compact: true,
+    ),
+  );
 
-    return dio;
-  });
+  // ── DioClient (with interceptors) ─────────────────────────
+  sl.registerLazySingleton<DioClient>(() => DioClient(dio));
 
   // ── Services ──────────────────────────────────────────────
   sl.registerLazySingleton<AuthService>(() => AuthService());

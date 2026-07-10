@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
-import '../../core/http_client.dart';
+import '../../core/di/injection_container.dart';
+import '../../core/network/dio_client.dart';
 
 class DisputeService {
-  final SecureHttpClient _client = SecureHttpClient();
+  final DioClient _client = sl<DioClient>();
 
   /// Upload evidence for a dispute
   ///

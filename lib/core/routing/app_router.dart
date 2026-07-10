@@ -15,7 +15,7 @@ import '../../ui/screens/auth/reset_password_screen.dart';
 import '../../ui/screens/profile_screen.dart';
 import '../../ui/screens/edit_profile_screen.dart';
 import '../../ui/screens/notifications_screen.dart';
-import '../../ui/screens/owner/owner_dashboard_new.dart';
+import '../../ui/screens/owner/owner_dashboard.dart';
 import '../../ui/screens/owner/create_requirement_screen.dart';
 import '../../ui/screens/owner/edit_requirement_screen.dart';
 import '../../ui/screens/owner/owner_requirement_detail_screen.dart';
@@ -24,7 +24,7 @@ import '../../ui/screens/owner/applicant_profile_screen.dart';
 import '../../ui/screens/owner/owner_chat_list_screen.dart';
 import '../../ui/screens/owner/owner_chat_detail_screen.dart';
 import '../../ui/screens/owner/worker_rating_screen.dart';
-import '../../ui/screens/labour/labour_dashboard_new.dart';
+import '../../ui/screens/labour/labour_dashboard.dart';
 import '../../ui/screens/labour/worker_find_job_screen.dart';
 import '../../ui/screens/labour/job_details_screen.dart';
 import '../../ui/screens/labour/my_applications_screen.dart';
@@ -218,9 +218,9 @@ List<RouteBase> _buildRoutes(AuthViewModel auth) => [
       // (_OwnerDashboardShell) provides the single NavigationBar.
       //
       // TODO: When Navigator.push calls are replaced, extract the
-      // actual tab content from OwnerDashboardNew into separate
+      // actual tab content from OwnerDashboard into separate
       // widgets (e.g. _OwnerHomeContent, _OwnerJobsContent).
-      // For now each branch shows the full OwnerDashboardNew
+      // For now each branch shows the full OwnerDashboard
       // which has its own internal tab — this results in a
       // temporary double-nav until the extraction is done.
       // ════════════════════════════════════════════════════════
@@ -229,9 +229,9 @@ List<RouteBase> _buildRoutes(AuthViewModel auth) => [
             _OwnerDashboardShell(navigationShell: navigationShell),
         branches: [
           _shellBranch(AppRoute.ownerHome, '/owner/home',
-              (_) => const OwnerDashboardNew()),
+              (_) => const OwnerDashboard()),
           _shellBranch(AppRoute.ownerJobs, '/owner/jobs',
-              (_) => const OwnerDashboardNew()),
+              (_) => const OwnerDashboard()),
           _shellBranch(AppRoute.ownerChat, '/owner/chat',
               (_) => const OwnerChatListScreen()),
           _shellBranch(AppRoute.ownerAlerts, '/owner/alerts',
@@ -309,14 +309,14 @@ List<RouteBase> _buildRoutes(AuthViewModel auth) => [
       // ════════════════════════════════════════════════════════
       //
       // Same TODO as owner: extract tab content from
-      // LabourDashboardNew into standalone widgets.
+      // LabourDashboard into standalone widgets.
       // ════════════════════════════════════════════════════════
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             _WorkerDashboardShell(navigationShell: navigationShell),
         branches: [
           _shellBranch(AppRoute.workerHome, '/worker/home',
-              (_) => const LabourDashboardNew()),
+              (_) => const LabourDashboard()),
           _shellBranch(AppRoute.workerFindJobs, '/worker/jobs',
               (_) => const WorkerFindJobScreen()),
           _shellBranch(AppRoute.workerApplied, '/worker/applied',

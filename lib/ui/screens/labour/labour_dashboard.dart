@@ -1,12 +1,19 @@
+import 'package:dihaadi_app/constants/colors.dart';
+import 'package:dihaadi_app/ui/screens/labour/job_details_screen.dart';
+import 'package:dihaadi_app/ui/screens/labour/my_applications_screen.dart';
+import 'package:dihaadi_app/ui/screens/labour/worker_chat_list_screen.dart';
+import 'package:dihaadi_app/ui/screens/loading_screen.dart';
+import 'package:dihaadi_app/ui/screens/profile_screen.dart';
+import 'package:dihaadi_app/ui/widgets/worker_dashboard_header.dart';
+import 'package:dihaadi_app/ui/widgets/worker_stats_grid.dart';
+import 'package:dihaadi_app/ui/widgets/worker_status_banner.dart';
+import 'package:dihaadi_app/ui/widgets/job_search_header.dart';
+import 'package:dihaadi_app/ui/widgets/worker_job_card.dart';
+import 'package:dihaadi_app/ui/screens/labour/worker_find_job_screen.dart';
+import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
+import 'package:dihaadi_app/viewmodels/labour_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:dihaadi_app/viewmodels/labour_viewmodel.dart';
-import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
-import 'package:dihaadi_app/ui/screens/role_selection_screen.dart';
-import 'package:dihaadi_app/ui/screens/profile_screen.dart';
-import 'package:dihaadi_app/ui/screens/labour/job_details_screen.dart';
-import 'package:dihaadi_app/ui/screens/loading_screen.dart';
-import 'package:dihaadi_app/constants/colors.dart';
 
 class LabourDashboard extends StatefulWidget {
   const LabourDashboard({super.key});
@@ -17,425 +24,221 @@ class LabourDashboard extends StatefulWidget {
 
 class _LabourDashboardState extends State<LabourDashboard> {
   int _currentIndex = 0;
+  int _selectedFilterIndex = 0;
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LabourViewModel>().fetchJobs();
+      final vm = context.read<LabourViewModel>();
+      vm.fetchJobs();
+      vm.fetchDashboardStats();
+      vm.fetchRecentApplications();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final screens = [
-      _buildDashboard(),
-      _buildJobs(),
+      _buildHomeFeed(),
+      const WorkerFindJobScreen(),
+      const MyApplicationsScreen(),
+      const WorkerChatListScreen(),
       const ProfileScreen(),
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Find Jobs'),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthViewModel>().logout();
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const RoleSelectionScreen()),
-                (route) => false,
-              );
-            },
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       body: screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.work),
-            label: 'Jobs',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+      bottomNavigationBar: _buildModernNavigationBar(),
+    );
+  }
+
+  Widget _buildModernNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDashboard() {
-    return Consumer<LabourViewModel>(
-      builder: (context, viewModel, child) {
-        if (viewModel.isLoading) {
-          return const LoadingScreen();
-        }
-
-        final availableJobs = viewModel.availableJobs.length;
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome Card
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFF6B9D), Color(0xFFFA8072)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Available Jobs',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '$availableJobs',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.work,
-                            color: Colors.white,
-                            size: 32,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Recent Jobs
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Recent Jobs',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textMain,
-                    ),
-                  ),
-                  Text(
-                    'View All',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (viewModel.availableJobs.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Text(
-                      'No jobs available right now',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: viewModel.availableJobs.take(3).length,
-                  itemBuilder: (context, index) {
-                    final job = viewModel.availableJobs[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => JobDetailsScreen(job: job),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: AppColors.borderLight, width: 1),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    job.title,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textMain,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.success.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Text(
-                                    'New',
-                                    style: TextStyle(
-                                      color: AppColors.success,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              job.description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '₹${job.salary ?? "Negotiable"}',
-                                  style: const TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.location_on,
-                                        size: 14,
-                                        color: AppColors.textSecondary),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      job.address ?? 'Location',
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildJobs() {
-    return Consumer<LabourViewModel>(
-      builder: (context, viewModel, child) {
-        if (viewModel.isLoading) {
-          return const LoadingScreen();
-        }
-
-        if (viewModel.availableJobs.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.work_outline,
-                  size: 64,
-                  color: AppColors.textSecondary,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'No Jobs Available',
-                  style: TextStyle(
-                    fontSize: 18,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: NavigationBarTheme(
+            data: NavigationBarThemeData(
+              indicatorColor: AppColors.primary.withValues(alpha: 0.1),
+              labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return const TextStyle(
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textMain,
-                  ),
+                    color: AppColors.primary,
+                  );
+                }
+                return const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textHint,
+                );
+              }),
+              iconTheme: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return const IconThemeData(color: AppColors.primary, size: 24);
+                }
+                return const IconThemeData(color: AppColors.textHint, size: 24);
+              }),
+            ),
+            child: NavigationBar(
+              height: 65,
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) => setState(() => _currentIndex = index),
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.home_rounded),
+                  label: 'Home',
                 ),
-                SizedBox(height: 8),
-                Text(
-                  'Check back later for new opportunities',
-                  style: TextStyle(color: AppColors.textSecondary),
+                NavigationDestination(
+                  icon: Icon(Icons.search_rounded),
+                  label: 'Jobs',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.assignment_rounded),
+                  label: 'Applied',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.chat_bubble_rounded),
+                  label: 'Chat',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_rounded),
+                  label: 'Profile',
                 ),
               ],
             ),
-          );
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeFeed() {
+    return Consumer<LabourViewModel>(
+      builder: (context, viewModel, child) {
+        if (viewModel.isLoading) {
+          return const LoadingScreen();
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: viewModel.availableJobs.length,
-          itemBuilder: (context, index) {
-            final job = viewModel.availableJobs[index];
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => JobDetailsScreen(job: job),
-                  ),
-                );
-              },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.borderLight, width: 1),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                job.title,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textMain,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                job.description,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.success.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(
-                            Icons.favorite_border,
-                            color: AppColors.success,
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on,
-                                size: 16, color: AppColors.textSecondary),
-                            const SizedBox(width: 4),
-                            Text(
-                              job.address ?? 'Location TBD',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          '₹${job.salary ?? "Negotiable"}',
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
+        final stats = viewModel.stats;
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            await viewModel.fetchJobs();
+            await viewModel.fetchDashboardStats();
           },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Consumer<AuthViewModel>(
+                  builder: (context, authVm, child) {
+                    final user = authVm.currentUser;
+                    return WorkerDashboardHeader(
+                      userName: user?.name ?? 'Rahul',
+                      location: user?.addresses?.isNotEmpty == true
+                          ? '${user!.addresses![0]['city']}, ${user.addresses![0]['state']}'
+                          : 'Mumbai, Maharashtra',
+                      onNotificationTap: () {},
+                      onProfileTap: () => setState(() => _currentIndex = 3),
+                    );
+                  },
+                ),
+
+                WorkerStatsGrid(
+                  tasksCompleted: int.tryParse(stats['approved'] ?? '0') ?? 0,
+                  requestedJobs: int.tryParse(stats['jobsApplied'] ?? '0') ?? 0,
+                  monthlyEarnings:
+                      double.tryParse(stats['earnings'] ?? '0') ?? 0,
+                  averageRating: viewModel.averageRating > 0
+                      ? viewModel.averageRating
+                      : 0.0,
+                ),
+
+                WorkerStatusBanner(
+                  activeApplications: viewModel.recentApplications.length,
+                  isAvailable: viewModel.isAvailable,
+                  onAvailabilityChanged: (val) =>
+                      viewModel.toggleAvailability(val),
+                ),
+
+                JobSearchHeader(
+                  title: 'Find Jobs',
+                  selectedIndex: _selectedFilterIndex,
+                  filterTabs: [
+                    'Available',
+                    'Applied (${viewModel.recentApplications.length})',
+                    'In Progress (${stats['ongoing'] ?? '0'})',
+                    'Completed (${stats['completed'] ?? '0'})'
+                  ],
+                  onTabChanged: (index) => setState(() => _selectedFilterIndex = index),
+                  onSearchChanged: (val) => setState(() => _searchQuery = val),
+                  onFilterTap: () {},
+                ),
+
+                if (viewModel.availableJobs.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(60.0),
+                      child: Column(
+                        children: [
+                          Icon(Icons.search_off_rounded, size: 48, color: AppColors.textHint),
+                          SizedBox(height: 16),
+                          Text(
+                            'No jobs available right now',
+                            style: TextStyle(color: AppColors.textHint, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: viewModel.availableJobs.length,
+                    itemBuilder: (context, index) {
+                      final job = viewModel.availableJobs[index];
+                      return WorkerJobCard(
+                        requirement: job,
+                        isApplied: viewModel.recentApplications
+                            .any((a) => a.id == job.id),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    JobDetailsScreen(job: job)),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
         );
       },
     );
   }
 }
+

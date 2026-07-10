@@ -4,8 +4,8 @@ import 'package:dihaadi_app/data/models/user_model.dart';
 import 'package:dihaadi_app/viewmodels/auth_viewmodel.dart';
 import 'package:dihaadi_app/ui/screens/auth/register/register_screen.dart';
 import 'package:dihaadi_app/ui/screens/auth/forgot_password_screen.dart';
-import 'package:dihaadi_app/ui/screens/owner/owner_dashboard_new.dart';
-import 'package:dihaadi_app/ui/screens/labour/labour_dashboard_new.dart';
+import 'package:dihaadi_app/ui/screens/owner/owner_dashboard.dart';
+import 'package:dihaadi_app/ui/screens/labour/labour_dashboard.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 import 'package:dihaadi_app/core/validators.dart';
 
@@ -48,13 +48,13 @@ class _LoginScreenState extends State<LoginScreen> {
           if (isOwner) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const OwnerDashboardNew()),
+              MaterialPageRoute(builder: (context) => const OwnerDashboard()),
               (route) => false,
             );
           } else {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const LabourDashboardNew()),
+              MaterialPageRoute(builder: (context) => const LabourDashboard()),
               (route) => false,
             );
           }

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'constants/colors.dart';
 import 'core/di/injection_container.dart';
+import 'core/network/dio_client.dart';
 import 'core/routing/app_router.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/owner_viewmodel.dart';
@@ -34,6 +35,14 @@ class _DihaadiAppState extends State<DihaadiApp> {
     super.initState();
     _authViewModel = AuthViewModel();
     _router = createRouter(_authViewModel);
+
+    // Wire up 401 → logout + redirect to /role-selection
+    sl<DioClient>().setOnUnauthorized(() {
+      _authViewModel.logout();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _router.go('/role-selection');
+      });
+    });
   }
 
   @override
