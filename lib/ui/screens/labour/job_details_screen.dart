@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:dihaadi_app/data/models/requirement_model.dart';
 import 'package:dihaadi_app/data/services/requirement_service.dart';
+import 'package:dihaadi_app/ui/widgets/static_map_preview.dart';
 import 'package:dihaadi_app/viewmodels/labour_viewmodel.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 
@@ -218,6 +219,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                         color: AppColors.textMain,
                       ),
                     ),
+                    if (job.latitude != null && job.longitude != null) ...[
+                      const SizedBox(height: 12),
+                      StaticMapPreview(
+                        latitude: job.latitude!,
+                        longitude: job.longitude!,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -292,7 +300,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                     if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Applied Successfully!'),
+                          content: Text('Application submitted!'),
                           backgroundColor: AppColors.success,
                         ),
                       );

@@ -36,6 +36,7 @@ dependencies:
   # UI & Responsiveness
   flutter_screenutil: ^5.9.0 # Responsive design
   shimmer: ^3.0.0 # Skeleton loading effects
+  google_maps_flutter: ^2.5.0 # Map integration
 
   # Data & Storage
   json_serializable: ^6.7.1 # Better JSON serialization

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 import 'package:dihaadi_app/data/models/chat_model.dart' as chat;
@@ -27,6 +28,7 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
   final RequirementService _requirementService = RequirementService();
 
   List<chat.ChatMessage> _messages = [];
+  StreamSubscription<List<chat.ChatMessage>>? _messagesSubscription;
 
   bool _isJobCompleted = false;
   bool _isLoading = true;
@@ -35,37 +37,42 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _messagesSubscription?.cancel();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    _fetchMessages();
+    _listenToMessages();
   }
 
-  Future<void> _fetchMessages() async {
+  void _listenToMessages() {
     setState(() => _isLoading = true);
-    try {
-      final messages = await _chatService.getMessages(
-        conversationId: widget.conversation.id,
-      );
-      if (!mounted) return;
-      setState(() => _messages = messages);
-      _scrollToBottom();
-    } catch (_) {
-      // Keep the compose box available even if history fails.
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    _messagesSubscription = _chatService
+        .getMessagesStream(widget.conversation.id)
+        .listen(
+          (messages) {
+            if (!mounted) return;
+            setState(() {
+              _messages = messages;
+              _isLoading = false;
+            });
+            _scrollToBottom();
+          },
+          onError: (error) {
+            debugPrint('Message stream error: $error');
+            if (mounted) setState(() => _isLoading = false);
+          },
+        );
   }
 
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
 
     final text = _messageController.text.trim();
-
     _messageController.clear();
+
     try {
       final sent = await _chatService.sendMessage(
         conversationId: widget.conversation.id,
@@ -307,14 +314,14 @@ class _WorkerChatDetailScreenState extends State<WorkerChatDetailScreen> {
             child: _isLoading
                 ? const MessageListShimmer()
                 : ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _WorkerMessageBubble(message: message);
-              },
-            ),
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final message = _messages[index];
+                      return _WorkerMessageBubble(message: message);
+                    },
+                  ),
           ),
 
           // Message Input
@@ -477,4 +484,3 @@ class _WorkerMessageBubble extends StatelessWidget {
     return '$hour:$minute $suffix';
   }
 }
-

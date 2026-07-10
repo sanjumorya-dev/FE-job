@@ -14,6 +14,8 @@ class CreateRequirementRequest {
   final String? state;
   final String? pincode;
   final String? country;
+  final double? latitude;
+  final double? longitude;
   final List<String> images;
   final int? status;
   final DateTime? date;
@@ -34,6 +36,8 @@ class CreateRequirementRequest {
     this.state,
     this.pincode,
     this.country,
+    this.latitude,
+    this.longitude,
     this.images = const [],
     this.status,
     this.date,
@@ -56,6 +60,8 @@ class CreateRequirementRequest {
       'State': state,
       'Pincode': pincode,
       'Country': country,
+      'Latitude': latitude,
+      'Longitude': longitude,
       'Images': images,
       if (status != null) 'Status': status,
       if (date != null) 'Date': date?.toUtc().toIso8601String(),
@@ -80,6 +86,8 @@ class CreateRequirementRequest {
       'state': state,
       'pincode': pincode,
       'country': country,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 }
@@ -130,6 +138,8 @@ class Requirement {
   final String? state;
   final String? pincode;
   final String? country;
+  final double? latitude;
+  final double? longitude;
   final String? salaryPeriod;
   final List<String> images;
   final String? userId;
@@ -156,6 +166,8 @@ class Requirement {
       'state': state,
       'pincode': pincode,
       'country': country,
+      'latitude': latitude,
+      'longitude': longitude,
       'salaryPeriod': salaryPeriod,
       'images': images,
       'userId': userId,
@@ -181,6 +193,8 @@ class Requirement {
     this.state,
     this.pincode,
     this.country,
+    this.latitude,
+    this.longitude,
     this.salaryPeriod,
     this.images = const [],
     this.userId,
@@ -263,6 +277,8 @@ class Requirement {
       state: (json['state'] ?? json['State'])?.toString(),
       pincode: (json['pincode'] ?? json['Pincode'])?.toString(),
       country: (json['country'] ?? json['Country'])?.toString(),
+      latitude: _parseDouble(json['latitude'] ?? json['Latitude']),
+      longitude: _parseDouble(json['longitude'] ?? json['Longitude']),
       salaryPeriod: (json['salaryPeriod'] ?? json['SalaryPeriod'])?.toString(),
       images: _parseStringList(json['images'] ?? json['Images']),
       userId:

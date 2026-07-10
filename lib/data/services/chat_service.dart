@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../core/di/injection_container.dart';
 import '../../core/network/dio_client.dart';
@@ -34,7 +35,7 @@ class ChatService {
     }
   }
 
-  /// Get messages in a conversation
+  /// Get messages in a conversation (one-time fetch)
   ///
   /// [conversationId] - The conversation ID
   /// [page] - Page number for pagination (default: 1)
@@ -67,6 +68,44 @@ class ChatService {
       debugPrint('Get messages error: $e');
       rethrow;
     }
+  }
+
+  /// Get messages as a stream with 5-second polling
+  ///
+  /// Returns a broadcast stream that emits the full message list every 5 seconds.
+  /// The stream automatically cancels when the listener cancels their subscription.
+  /// Use this for real-time chat updates without WebSocket support.
+  Stream<List<ChatMessage>> getMessagesStream(String conversationId) {
+    final controller = StreamController<List<ChatMessage>>.broadcast();
+    Timer? timer;
+
+    Future<void> fetchAndEmit() async {
+      if (controller.isClosed) return;
+      try {
+        final messages = await getMessages(conversationId: conversationId);
+        if (!controller.isClosed) {
+          controller.add(messages);
+        }
+      } catch (e) {
+        debugPrint('Polling error: $e');
+        // Don't add error to stream, just log and continue polling
+      }
+    }
+
+    // Initial fetch
+    fetchAndEmit();
+
+    // Start periodic polling
+    timer = Timer.periodic(const Duration(seconds: 5), (_) => fetchAndEmit());
+
+    // Cleanup on cancel
+    controller.onCancel = () {
+      timer?.cancel();
+      timer = null;
+      controller.close();
+    };
+
+    return controller.stream;
   }
 
   /// Send a message in a conversation

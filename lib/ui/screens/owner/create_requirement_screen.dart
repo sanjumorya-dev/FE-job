@@ -10,8 +10,10 @@ import 'package:dihaadi_app/constants/api_config.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dihaadi_app/data/services/common_service.dart';
 import 'package:dihaadi_app/data/services/media_service.dart';
+import 'package:dihaadi_app/ui/screens/map_picker_screen.dart';
 import 'package:dihaadi_app/viewmodels/work_type_viewmodel.dart';
 import 'package:dihaadi_app/constants/colors.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:io';
 
 class CreateRequirementScreen extends StatefulWidget {
@@ -46,6 +48,8 @@ class _CreateRequirementScreenState extends State<CreateRequirementScreen> {
   String? _selectedState;
   String? _selectedCountry;
   String? _selectedPincode;
+  double? _selectedLatitude;
+  double? _selectedLongitude;
   Timer? _searchDebounce;
   bool _isSearching = false;
   late FocusNode _addressFocusNode;
@@ -340,7 +344,6 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
       );
       if (image != null) {
         // Compress the image
-        final file = File(image.path);
         final compressed = await _mediaService.pickImageFromGallery();
         if (compressed != null) {
           setState(() {
@@ -361,6 +364,25 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
     setState(() {
       _selectedImages.removeAt(index);
     });
+  }
+
+  Future<void> _openMapPicker() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MapPickerScreen(
+          initialLatitude: _selectedLatitude ?? 28.6139,
+          initialLongitude: _selectedLongitude ?? 77.2090,
+        ),
+      ),
+    );
+
+    if (result != null && result is LatLng) {
+      setState(() {
+        _selectedLatitude = result.latitude;
+        _selectedLongitude = result.longitude;
+      });
+    }
   }
 
 
@@ -415,6 +437,8 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
         state: _selectedState,
         pincode: _selectedPincode,
         country: _selectedCountry,
+        latitude: _selectedLatitude,
+        longitude: _selectedLongitude,
         images: imageUrls,
       );
 
@@ -850,17 +874,63 @@ debugPrint('Parsed - State: $state, Country: $country, Pincode: $pincode');
               ),
               const SizedBox(width: 8),
               InkWell(
-                onTap: () {}, // TODO: GPS logic
+                onTap: _openMapPicker,
                 child: Container(
                   height: 44,
                   width: 44,
                   decoration: BoxDecoration(color: const Color(0xFFF3F5FA), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.near_me_outlined, size: 20, color: Color(0xFF9AA1B4)),
+                  child: const Icon(Icons.map_outlined, size: 20, color: Color(0xFF9AA1B4)),
                 ),
               ),
             ],
           ),
         ),
+        const SizedBox(height: 8),
+        // Map preview
+        if (_selectedLatitude != null && _selectedLongitude != null)
+          _buildInputContainer(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16, color: Color(0xFF2182F3)),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Selected Location',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF9AA1B4), fontWeight: FontWeight.w500),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: _openMapPicker,
+                      child: const Text('Change', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F0FE),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.location_on, size: 32, color: Color(0xFF2182F3)),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_selectedLatitude!.toStringAsFixed(4)}, ${_selectedLongitude!.toStringAsFixed(4)}',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF6D7487)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         const SizedBox(height: 12),
         
         // Counters

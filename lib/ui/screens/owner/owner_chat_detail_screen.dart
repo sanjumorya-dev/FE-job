@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:dihaadi_app/constants/colors.dart';
 import 'package:dihaadi_app/data/models/chat_model.dart' as chat;
@@ -25,6 +26,7 @@ class _OwnerChatDetailScreenState extends State<OwnerChatDetailScreen> {
   final ChatService _chatService = ChatService();
   
   List<chat.ChatMessage> _messages = [];
+  StreamSubscription<List<chat.ChatMessage>>? _messagesSubscription;
 
   bool _isJobCompleted = false;
   bool _isLoading = true;
@@ -33,29 +35,34 @@ class _OwnerChatDetailScreenState extends State<OwnerChatDetailScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _messagesSubscription?.cancel();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    _fetchMessages();
+    _listenToMessages();
   }
 
-  Future<void> _fetchMessages() async {
+  void _listenToMessages() {
     setState(() => _isLoading = true);
-    try {
-      final messages = await _chatService.getMessages(
-        conversationId: widget.conversation.id,
-      );
-      if (!mounted) return;
-      setState(() => _messages = messages);
-      _scrollToBottom();
-    } catch (_) {
-      // The empty state remains usable so users can still try sending.
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    _messagesSubscription = _chatService
+        .getMessagesStream(widget.conversation.id)
+        .listen(
+          (messages) {
+            if (!mounted) return;
+            setState(() {
+              _messages = messages;
+              _isLoading = false;
+            });
+            _scrollToBottom();
+          },
+          onError: (error) {
+            debugPrint('Message stream error: $error');
+            if (mounted) setState(() => _isLoading = false);
+          },
+        );
   }
 
   Future<void> _sendMessage() async {
@@ -70,6 +77,7 @@ class _OwnerChatDetailScreenState extends State<OwnerChatDetailScreen> {
         text: text,
       );
       if (!mounted) return;
+      // Message will be added via stream, but we can optimistically add it
       setState(() => _messages.add(sent));
       _scrollToBottom();
     } catch (e) {
@@ -295,14 +303,14 @@ class _OwnerChatDetailScreenState extends State<OwnerChatDetailScreen> {
             child: _isLoading
                 ? const MessageListShimmer()
                 : ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _MessageBubble(message: message);
-              },
-            ),
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final message = _messages[index];
+                      return _MessageBubble(message: message);
+                    },
+                  ),
           ),
 
           // Message Input
@@ -429,7 +437,9 @@ class _MessageBubble extends StatelessWidget {
                         _formatMessageTime(message.timestamp),
                         style: TextStyle(
                           fontSize: 10,
-                          color: sentByMe ? Colors.white.withOpacity(0.7) : AppColors.textSecondary,
+                          color: sentByMe
+                              ? Colors.white.withOpacity(0.7)
+                              : AppColors.textSecondary,
                         ),
                       ),
                       if (sentByMe) ...[
@@ -463,4 +473,3 @@ class _MessageBubble extends StatelessWidget {
     return '$hour:$minute $suffix';
   }
 }
-
